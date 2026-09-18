@@ -633,9 +633,22 @@
     }
   },
   "batteryUsableFactor": 0.8333,
+  "batteryChemistries": {
+    "lead_acid": {
+      "name": "Lead-Acid",
+      "description": "Tubular lead-acid batteries for standard backup",
+      "usableFactor": 0.8333
+    },
+    "lithium_ion": {
+      "name": "Lithium-Ion (LiFePO4)",
+      "description": "Lithium iron phosphate batteries — longer life and higher usable capacity",
+      "usableFactor": 0.9
+    }
+  },
   "batteries": {
     "exide": {
       "name": "Exide",
+      "chemistry": "lead_acid",
       "warranty": 5,
       "options": [
         {
@@ -663,6 +676,7 @@
     },
     "luminous": {
       "name": "Luminous",
+      "chemistry": "lead_acid",
       "warranty": 5,
       "options": [
         {
@@ -690,6 +704,7 @@
     },
     "livguard": {
       "name": "Livguard",
+      "chemistry": "lead_acid",
       "warranty": 5,
       "options": [
         {
@@ -705,6 +720,141 @@
           "ah": 200,
           "voltage": 12,
           "price": 17900
+        }
+      ]
+    },
+    "amptek": {
+      "name": "Amptek",
+      "chemistry": "lithium_ion",
+      "warranty": 5,
+      "options": [
+        {
+          "id": "amptek_amp128150pro",
+          "model": "AMP128150PRO",
+          "label": "100 AH 12.8V",
+          "ah": 100,
+          "voltage": 12.8,
+          "price": 14124
+        },
+        {
+          "id": "amptek_amp128200pro",
+          "model": "AMP128200PRO",
+          "label": "135 AH 12.8V",
+          "ah": 135,
+          "voltage": 12.8,
+          "price": 21293
+        },
+        {
+          "id": "amptek_amp128250pro",
+          "model": "AMP128250PRO",
+          "label": "150 AH 12.8V",
+          "ah": 150,
+          "voltage": 12.8,
+          "price": 22684
+        },
+        {
+          "id": "amptek_amp128300pro",
+          "model": "AMP128300PRO",
+          "label": "200 AH 12.8V",
+          "ah": 200,
+          "voltage": 12.8,
+          "price": 26857
+        },
+        {
+          "id": "amptek_amp128314",
+          "model": "AMP128314",
+          "label": "314 AH 12.8V",
+          "ah": 314,
+          "voltage": 12.8,
+          "price": 40553
+        },
+        {
+          "id": "amptek_amp256150pro",
+          "model": "AMP256150PRO",
+          "label": "100 AH 25.6V",
+          "ah": 100,
+          "voltage": 25.6,
+          "price": 27178
+        },
+        {
+          "id": "amptek_amp256300pro",
+          "model": "AMP256300PRO",
+          "label": "200 AH 25.6V",
+          "ah": 200,
+          "voltage": 25.6,
+          "price": 51360
+        },
+        {
+          "id": "amptek_at_ess_48100",
+          "model": "AT-ESS-48100",
+          "label": "100 AH 48V",
+          "ah": 100,
+          "voltage": 48,
+          "price": 55908
+        },
+        {
+          "id": "amptek_at_ess_512100",
+          "model": "AT-ESS-512100",
+          "label": "100 AH 51.2V",
+          "ah": 100,
+          "voltage": 51.2,
+          "price": 58048
+        },
+        {
+          "id": "amptek_at_ess_48100_wm",
+          "model": "AT-ESS-48100-WM",
+          "label": "100 AH 48V Wall Mount",
+          "ah": 100,
+          "voltage": 48,
+          "price": 58048
+        },
+        {
+          "id": "amptek_at_ess_512100_wm",
+          "model": "AT-ESS-512100-WM",
+          "label": "100 AH 51.2V Wall Mount",
+          "ah": 100,
+          "voltage": 51.2,
+          "price": 60188
+        },
+        {
+          "id": "amptek_at_ess_96100",
+          "model": "AT-ESS-96100",
+          "label": "100 AH 96V",
+          "ah": 100,
+          "voltage": 96,
+          "price": 126260
+        },
+        {
+          "id": "amptek_at_ess_120100",
+          "model": "AT-ESS-120100",
+          "label": "100 AH 120V",
+          "ah": 100,
+          "voltage": 120,
+          "price": 140170
+        },
+        {
+          "id": "amptek_at_ess_128200_rack",
+          "model": "AT-ESS-128200-RACK",
+          "label": "200 AH 128V Rack",
+          "ah": 200,
+          "voltage": 128,
+          "price": 347750
+        },
+        {
+          "id": "amptek_at_ess_240100_rack",
+          "model": "AT-ESS-240100-RACK",
+          "label": "100 AH 240V Rack",
+          "ah": 100,
+          "voltage": 240,
+          "price": 401250
+        },
+        {
+          "id": "amptek_at_ess_256100_rack",
+          "model": "AT-ESS-256100-RACK",
+          "label": "100 AH 256V Rack",
+          "ah": 100,
+          "voltage": 256,
+          "price": 417300
         }
       ]
     }

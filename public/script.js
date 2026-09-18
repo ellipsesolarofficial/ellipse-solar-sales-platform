@@ -447,47 +447,86 @@ function updateInverterBrands() {
         `${typeConfig ? typeConfig.name : 'On-Grid'} inverter pricing`;
 }
 
-// Usable kWh for a battery: AH × V, kept at the usable share (83.33% by default)
-function batteryKwh(ah, voltage, quantity) {
-    const factor = rates.batteryUsableFactor || 0.8333;
+function getBatteryChemistryConfig(key) {
+    const chemistries = rates.batteryChemistries || {};
+    return chemistries[key] || { name: 'Lead-Acid', usableFactor: rates.batteryUsableFactor || 0.8333 };
+}
+
+function getBatteriesForChemistry(chemistry) {
+    return Object.entries(rates.batteries || {}).filter(([, config]) =>
+        (config.chemistry || 'lead_acid') === chemistry
+    );
+}
+
+function batteryUsableFactor(chemistry) {
+    const chem = getBatteryChemistryConfig(chemistry);
+    return chem.usableFactor || rates.batteryUsableFactor || 0.8333;
+}
+
+// Usable kWh for a battery: AH × V, kept at the chemistry's usable share
+function batteryKwh(ah, voltage, quantity, chemistry) {
+    const factor = batteryUsableFactor(chemistry);
     const kwh = (ah * voltage * (quantity || 1) * factor) / 1000;
     return Math.round(kwh * 100) / 100;
 }
 
-// Populate battery capacities for the selected brand, and show/hide the picker
+function batteryOptionLabel(opt, chemistry) {
+    const kwh = batteryKwh(opt.ah, opt.voltage, 1, chemistry);
+    return opt.model ? `${opt.label} · ${opt.model} (${kwh} kWh)` : `${opt.label} (${kwh} kWh)`;
+}
+
+// Populate chemistry, brand, and capacity pickers, and show/hide the battery section
 function updateBatteryOptions(resetBrand) {
     const backupRequired = document.getElementById('batteryBackup').value === 'yes';
+    const chemistrySelect = document.getElementById('batteryChemistry');
     const brandSelect = document.getElementById('batteryBrand');
     const optionSelect = document.getElementById('batteryOption');
     
     document.getElementById('batteryOptionsGroup').style.display = backupRequired ? 'block' : 'none';
     
-    // Fill the brand list once (or when asked to reset)
-    if (resetBrand || !brandSelect.options.length) {
-        const previousBrand = brandSelect.value;
-        brandSelect.innerHTML = '';
-        Object.keys(rates.batteries).forEach(key => {
+    const defaultChemistries = {
+        lead_acid: { name: 'Lead-Acid' },
+        lithium_ion: { name: 'Lithium-Ion (LiFePO4)' }
+    };
+    const chemistries = rates.batteryChemistries || defaultChemistries;
+    
+    if (chemistrySelect && (resetBrand || !chemistrySelect.options.length)) {
+        const previousChem = chemistrySelect.value;
+        chemistrySelect.innerHTML = '';
+        Object.entries(chemistries).forEach(([key, config]) => {
             const option = document.createElement('option');
             option.value = key;
-            option.textContent = rates.batteries[key].name;
-            brandSelect.appendChild(option);
+            option.textContent = config.name;
+            chemistrySelect.appendChild(option);
         });
-        if (rates.batteries[previousBrand]) brandSelect.value = previousBrand;
+        if (previousChem && chemistries[previousChem]) chemistrySelect.value = previousChem;
     }
     
-    const brandConfig = rates.batteries[brandSelect.value] || Object.values(rates.batteries)[0];
+    const chemistry = (chemistrySelect && chemistrySelect.value) || 'lead_acid';
+    const brands = getBatteriesForChemistry(chemistry);
+    
+    const previousBrand = brandSelect.value;
+    brandSelect.innerHTML = '';
+    brands.forEach(([key, config]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = config.name;
+        brandSelect.appendChild(option);
+    });
+    if (brands.some(([key]) => key === previousBrand)) brandSelect.value = previousBrand;
+    
+    const brandConfig = rates.batteries[brandSelect.value] || (brands[0] && brands[0][1]);
     const previousOption = optionSelect.value;
     
     optionSelect.innerHTML = '';
-    (brandConfig.options || []).forEach(opt => {
+    ((brandConfig && brandConfig.options) || []).forEach(opt => {
         const option = document.createElement('option');
         option.value = opt.id;
-        option.textContent = `${opt.label} (${batteryKwh(opt.ah, opt.voltage, 1)} kWh)`;
+        option.textContent = batteryOptionLabel(opt, chemistry);
         optionSelect.appendChild(option);
     });
     
-    // Keep the same capacity selected if the new brand also offers it
-    const stillAvailable = (brandConfig.options || []).some(o => o.id === previousOption);
+    const stillAvailable = ((brandConfig && brandConfig.options) || []).some(o => o.id === previousOption);
     if (stillAvailable) optionSelect.value = previousOption;
     
     updateBatteryTotalHint();
@@ -547,18 +586,31 @@ function updateBatteryTotalHint() {
         return;
     }
     
-    hint.innerHTML = `<span style="color: #00895e;">${quantity} × ${selected.label} = ${batteryKwh(selected.ah, selected.voltage, quantity)} kWh total</span>`;
+    hint.innerHTML = `<span style="color: #00895e;">${quantity} × ${selected.label} = ${batteryKwh(selected.ah, selected.voltage, quantity, selected.chemistryKey)} kWh total</span>`;
 }
 
 // Resolve the currently selected battery option from the form
 function getSelectedBattery() {
     const brandKey = document.getElementById('batteryBrand').value;
     const optionId = document.getElementById('batteryOption').value;
+    const chemistryKey = document.getElementById('batteryChemistry')
+        ? document.getElementById('batteryChemistry').value
+        : 'lead_acid';
     const brandConfig = rates.batteries[brandKey];
     if (!brandConfig) return null;
     
     const option = (brandConfig.options || []).find(o => o.id === optionId);
-    return option ? { ...option, brandKey, brandName: brandConfig.name, warranty: brandConfig.warranty } : null;
+    if (!option) return null;
+    
+    const chemistry = getBatteryChemistryConfig(brandConfig.chemistry || chemistryKey);
+    return {
+        ...option,
+        brandKey,
+        brandName: brandConfig.name,
+        warranty: brandConfig.warranty,
+        chemistryKey: brandConfig.chemistry || chemistryKey,
+        chemistryName: chemistry.name
+    };
 }
 
 // Nearest whole-panel count for a target capacity (floor/round/ceil, closest wins)
@@ -809,6 +861,11 @@ document.addEventListener('DOMContentLoaded', function() {
         batteryBackupSelect.addEventListener('change', () => updateBatteryOptions(false));
     }
     
+    const batteryChemistrySelect = document.getElementById('batteryChemistry');
+    if (batteryChemistrySelect) {
+        batteryChemistrySelect.addEventListener('change', () => updateBatteryOptions(false));
+    }
+    
     const batteryBrandSelect = document.getElementById('batteryBrand');
     if (batteryBrandSelect) {
         batteryBrandSelect.addEventListener('change', () => updateBatteryOptions(false));
@@ -979,6 +1036,7 @@ function calculateQuotation(params) {
         inverterBrand, 
         systemType,
         batteryBackup,
+        batteryChemistry,
         batteryBrand,
         batteryOption,
         batteryQuantity,
@@ -1100,16 +1158,21 @@ function calculateQuotation(params) {
             || (batteryBrandConfig.options || [])[0];
         
         if (selectedOption) {
+            const chemistryKey = batteryBrandConfig.chemistry || batteryChemistry || 'lead_acid';
+            const chemistryConfig = getBatteryChemistryConfig(chemistryKey);
             batteryBaseCost = selectedOption.price * numBatteryQuantity;
             batteryDetails = {
                 brand: batteryBrandConfig.name,
+                chemistry: chemistryConfig.name,
+                chemistryKey,
+                model: selectedOption.model || null,
                 label: selectedOption.label,
                 ah: selectedOption.ah,
                 voltage: selectedOption.voltage,
                 unitPrice: selectedOption.price,
                 quantity: numBatteryQuantity,
-                kwhPerUnit: batteryKwh(selectedOption.ah, selectedOption.voltage, 1),
-                kwhTotal: batteryKwh(selectedOption.ah, selectedOption.voltage, numBatteryQuantity),
+                kwhPerUnit: batteryKwh(selectedOption.ah, selectedOption.voltage, 1, chemistryKey),
+                kwhTotal: batteryKwh(selectedOption.ah, selectedOption.voltage, numBatteryQuantity, chemistryKey),
                 warranty: batteryBrandConfig.warranty,
                 total: Math.round(batteryBaseCost)
             };
@@ -1440,7 +1503,7 @@ function displayQuotation(data) {
         ['Solar Panels', `${q.panelConfig.name} - ${panelSummary}`],
         ['Inverter', `${q.inverterConfig.name} ${q.inverterCapacity}kW WiFi Enabled`],
         ...(q.batteryInverterDetails ? [['Inverter for Batteries', `${q.batteryInverterDetails.brand} ${q.batteryInverterDetails.label}`]] : []),
-        ...(q.batteryDetails ? [['Battery Bank', `${q.batteryDetails.brand} ${q.batteryDetails.label} (${q.batteryDetails.kwhPerUnit} kWh) × ${q.batteryDetails.quantity}`
+        ...(q.batteryDetails ? [['Battery Bank', `${q.batteryDetails.brand} ${q.batteryDetails.chemistry}${q.batteryDetails.model ? ' · ' + q.batteryDetails.model : ''} ${q.batteryDetails.label} (${q.batteryDetails.kwhPerUnit} kWh) × ${q.batteryDetails.quantity}`
             + (q.batteryDetails.quantity > 1 ? ` = ${q.batteryDetails.kwhTotal} kWh` : '')]] : []),
         ['Structure', `${getDisplayName(rc.structure, 'Structure')} - ${q.structureBrand}`],
         ['ACDB + DCDB', getDisplayName(rc['acdb-dcdb-combo'], 'Polycab')],
@@ -1495,7 +1558,7 @@ function displayQuotation(data) {
         if (q.batteryDetails) {
             breakdownHTML += `
                 <tr>
-                    <td><strong>Battery Bank</strong> (${q.batteryDetails.quantity} × ${q.batteryDetails.brand} ${q.batteryDetails.label} × ₹${q.batteryDetails.unitPrice})</td>
+                    <td><strong>Battery Bank</strong> (${q.batteryDetails.quantity} × ${q.batteryDetails.brand} ${q.batteryDetails.chemistry} ${q.batteryDetails.label}${q.batteryDetails.model ? ' · ' + q.batteryDetails.model : ''} × ₹${q.batteryDetails.unitPrice})</td>
                     <td>${formatCurrency(q.breakdown.batteryBaseCost)}</td>
                 </tr>
             `;
@@ -1715,7 +1778,7 @@ function generatePDF(quotation) {
         ['Solar Module', brandName + ' (Bifacial)', panelCapacityLabel, String(q.panelCount)],
         ['PCU/Inverter', q.inverterConfig.name, q.inverterCapacity + 'kW (' + phaseText + ')', '1'],
         ...(q.batteryInverterDetails ? [['Battery Inverter', q.batteryInverterDetails.brand, q.batteryInverterDetails.label, '1']] : []),
-        ...(q.batteryDetails ? [['Battery', q.batteryDetails.brand, q.batteryDetails.label, String(q.batteryDetails.quantity)]] : []),
+        ...(q.batteryDetails ? [['Battery', `${q.batteryDetails.brand} (${q.batteryDetails.chemistry})`, q.batteryDetails.model ? `${q.batteryDetails.label} · ${q.batteryDetails.model}` : q.batteryDetails.label, String(q.batteryDetails.quantity)]] : []),
         ['Complete Set of Structure', 'G.I Standard (Tata/Apollo)', 'As per MNRE Standards', '1 Set'],
         ['DC Cable', 'Polycab', dcWireSpec, 'As per Site'],
         ['Armoured Cable', 'Polycab', acWireSpec, 'As per Site'],
