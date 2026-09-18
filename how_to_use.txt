@@ -1,0 +1,60 @@
+=====================================
+  ELLIPSE SOLAR - SALES PORTAL
+  Quick Start Guide
+=====================================
+
+🚀 EASIEST WAY TO START:
+
+1. Double-click "index.html" in this folder
+   OR
+2. Go to "public" folder and double-click "index.html"
+
+Both will open the application in your browser!
+
+=====================================
+
+📱 HOW TO USE:
+
+1. Fill in customer details (name, location)
+2. Enter WhatsApp number (optional) - Format: 919876543210
+3. Choose system size (in kW)
+4. Select panel type, inverter, and mounting
+5. Click "Calculate Estimate" to preview
+6. Click "Generate Quotation & PDF" to create final PDF
+7. Download PDF or send via WhatsApp
+
+=====================================
+
+⚙️ TO UPDATE PRICES:
+
+1. Open folder: config
+2. Edit file: rates.json
+3. Update prices (in Rupees)
+4. Save file
+5. Refresh browser page
+
+=====================================
+
+💡 TIPS:
+
+✓ No installation needed - Just click and use!
+✓ Works offline (except WhatsApp sharing)
+✓ PDF downloads automatically
+✓ Update prices anytime in public/rates.json
+✓ Works on any computer with a browser
+
+=====================================
+
+❓ NEED HELP?
+
+Read the detailed README.md file for:
+- Configuration guide
+- Customization options
+- Troubleshooting tips
+- Deployment options
+
+=====================================
+
+Contact: info@ellipsesolar.com
+
+☀️ Happy Selling!

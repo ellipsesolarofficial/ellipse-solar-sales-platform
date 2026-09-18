@@ -1,0 +1,953 @@
+{
+  "solarPanels": {
+    "ina": {
+      "name": "INA",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 22.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 21.0
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 23.2
+        },
+        "nonDcr": {
+          "pricePerWatt": 22.15
+        },
+        "capacities": [
+          600,
+          610,
+          615,
+          625
+        ],
+        "defaultCapacity": 610
+      },
+      "warranty": 30,
+      "profitByCapacity": {
+        "3": 45000,
+        "4": 50500,
+        "5": 60500,
+        "6": 68000,
+        "7": 75500,
+        "8": 83000,
+        "9": 90500,
+        "10": 98000,
+        "11": 103000,
+        "12": 108000,
+        "13": 113000,
+        "14": 118000,
+        "15": 123000,
+        "16": 128000,
+        "17": 133000,
+        "18": 138000,
+        "19": 143000,
+        "20": 148000
+      }
+    },
+    "adani": {
+      "name": "Adani",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 28
+        },
+        "nonDcr": {
+          "pricePerWatt": 25.5
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 29
+        },
+        "nonDcr": {
+          "pricePerWatt": 26.5
+        },
+        "capacities": [
+          570,
+          575,
+          580,
+          590,
+          600,
+          610,
+          615,
+          620
+        ],
+        "defaultCapacity": 610
+      },
+      "warranty": 25,
+      "profitByCapacity": {
+        "3": 40500,
+        "4": 50500,
+        "5": 60500,
+        "6": 68000,
+        "7": 75500,
+        "8": 83000,
+        "9": 90500,
+        "10": 98000,
+        "11": 103000,
+        "12": 108000,
+        "13": 113000,
+        "14": 118000,
+        "15": 123000,
+        "16": 128000,
+        "17": 133000,
+        "18": 138000,
+        "19": 143000,
+        "20": 148000
+      }
+    },
+    "waree": {
+      "name": "Waaree",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 28
+        },
+        "nonDcr": {
+          "pricePerWatt": 25.5
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 29
+        },
+        "nonDcr": {
+          "pricePerWatt": 26.5
+        },
+        "capacities": [
+          570,
+          575,
+          580,
+          590,
+          600,
+          610,
+          615,
+          620
+        ],
+        "defaultCapacity": 610
+      },
+      "warranty": 25,
+      "profitByCapacity": {
+        "3": 40500,
+        "4": 50500,
+        "5": 60500,
+        "6": 68000,
+        "7": 75500,
+        "8": 83000,
+        "9": 90500,
+        "10": 98000,
+        "11": 103000,
+        "12": 108000,
+        "13": 113000,
+        "14": 118000,
+        "15": 123000,
+        "16": 128000,
+        "17": 133000,
+        "18": 138000,
+        "19": 143000,
+        "20": 148000
+      }
+    },
+    "tata": {
+      "name": "Tata",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 29.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 27.0
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 30.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 28.0
+        },
+        "capacities": [
+          570,
+          575,
+          580,
+          590,
+          600,
+          610,
+          615,
+          620
+        ],
+        "defaultCapacity": 610
+      },
+      "warranty": 25,
+      "profitByCapacity": {
+        "3": 40500,
+        "4": 50500,
+        "5": 60500,
+        "6": 68000,
+        "7": 75500,
+        "8": 83000,
+        "9": 90500,
+        "10": 98000,
+        "11": 103000,
+        "12": 108000,
+        "13": 113000,
+        "14": 118000,
+        "15": 123000,
+        "16": 128000,
+        "17": 133000,
+        "18": 138000,
+        "19": 143000,
+        "20": 148000
+      }
+    },
+    "renewsys": {
+      "name": "Renewsys",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 23
+        },
+        "nonDcr": {
+          "pricePerWatt": 20.5
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 23.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 21.0
+        },
+        "capacities": [
+          570,
+          575,
+          580,
+          590,
+          600,
+          610,
+          615,
+          620
+        ],
+        "defaultCapacity": 610
+      },
+      "warranty": 30,
+      "profitByCapacity": {
+        "3": 40500,
+        "4": 50500,
+        "5": 60500,
+        "6": 68000,
+        "7": 75500,
+        "8": 83000,
+        "9": 90500,
+        "10": 98000,
+        "11": 103000,
+        "12": 108000,
+        "13": 113000,
+        "14": 118000,
+        "15": 123000,
+        "16": 128000,
+        "17": 133000,
+        "18": 138000,
+        "19": 143000,
+        "20": 148000
+      }
+    },
+    "premier": {
+      "name": "Premier",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 23.75
+        },
+        "nonDcr": {
+          "pricePerWatt": 21.25
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 24.75
+        },
+        "nonDcr": {
+          "pricePerWatt": 22.25
+        },
+        "capacities": [
+          570,
+          575,
+          580,
+          590,
+          600,
+          610,
+          615,
+          620
+        ],
+        "defaultCapacity": 610
+      },
+      "warranty": 30,
+      "profitByCapacity": {
+        "3": 40500,
+        "4": 50500,
+        "5": 60500,
+        "6": 68000,
+        "7": 75500,
+        "8": 83000,
+        "9": 90500,
+        "10": 98000,
+        "11": 103000,
+        "12": 108000,
+        "13": 113000,
+        "14": 118000,
+        "15": 123000,
+        "16": 128000,
+        "17": 133000,
+        "18": 138000,
+        "19": 143000,
+        "20": 148000
+      }
+    }
+  },
+  "panelTypes": {
+    "monoperc_bifacial": {
+      "name": "MonoPERC Bifacial",
+      "description": "MonoPERC Bifacial - Generates power from both sides"
+    },
+    "topcon_bifacial": {
+      "name": "TOPCon Bifacial",
+      "description": "TOPCon Bifacial - Tunnel Oxide Passivated Contact technology"
+    }
+  },
+  "systemTypes": {
+    "ongrid": {
+      "name": "On-Grid",
+      "documentLabel": "Solar On-Grid",
+      "usesBattery": true
+    },
+    "offgrid": {
+      "name": "Off-Grid",
+      "documentLabel": "Solar Off-Grid",
+      "usesBattery": true
+    },
+    "hybrid": {
+      "name": "Hybrid",
+      "documentLabel": "Solar Hybrid",
+      "usesBattery": true
+    }
+  },
+  "inverters": {
+    "ongrid": {
+      "polycab": {
+        "name": "Polycab",
+        "warranty": 8,
+        "pricingTiers": {
+          "2": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 15350
+          },
+          "3": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 15350
+          },
+          "3.6": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 15350
+          },
+          "4": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 19250
+          },
+          "4.6": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 24100
+          },
+          "5": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 24250
+          },
+          "5.5": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 25300
+          },
+          "6_1ph": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 26350
+          },
+          "6_1ph_2mppt": {
+            "phase": "1Ph",
+            "mppt": 2,
+            "price": 28590
+          },
+          "5_3ph": {
+            "phase": "3Ph",
+            "mppt": 1,
+            "price": 43900
+          },
+          "6_3ph_1mppt": {
+            "phase": "3Ph",
+            "mppt": 1,
+            "price": 44450
+          },
+          "8": {
+            "phase": "3Ph",
+            "mppt": 1,
+            "price": 44950
+          },
+          "10_1mppt": {
+            "phase": "3Ph",
+            "mppt": 1,
+            "price": 45550
+          },
+          "10_2mppt": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 50750
+          },
+          "12": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 63750
+          },
+          "15": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 64450
+          },
+          "20": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 82350
+          },
+          "25": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 88500
+          },
+          "30": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 108000
+          },
+          "40": {
+            "phase": "3Ph",
+            "mppt": 3,
+            "price": 146500
+          },
+          "50": {
+            "phase": "3Ph",
+            "mppt": 4,
+            "price": 156500
+          },
+          "60": {
+            "phase": "3Ph",
+            "mppt": 4,
+            "price": 162750
+          },
+          "75": {
+            "phase": "3Ph",
+            "mppt": 4,
+            "price": 194750
+          },
+          "100": {
+            "phase": "3Ph",
+            "mppt": 8,
+            "price": 257800
+          },
+          "110": {
+            "phase": "3Ph",
+            "mppt": 9,
+            "price": 268700
+          },
+          "125": {
+            "phase": "3Ph",
+            "mppt": 9,
+            "price": 302400
+          }
+        }
+      }
+    },
+    "hybrid": {
+      "polycab": {
+        "name": "Polycab Hybrid",
+        "warranty": 8,
+        "pricingTiers": {
+          "3": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 62000
+          },
+          "3.6": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 68000
+          },
+          "5": {
+            "phase": "1Ph",
+            "mppt": 2,
+            "price": 78000
+          },
+          "6_1ph": {
+            "phase": "1Ph",
+            "mppt": 2,
+            "price": 85000
+          },
+          "5_3ph": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 105000
+          },
+          "6_3ph": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 112000
+          },
+          "8": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 128000
+          },
+          "10": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 145000
+          },
+          "12": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 168000
+          },
+          "15": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 195000
+          },
+          "20": {
+            "phase": "3Ph",
+            "mppt": 3,
+            "price": 245000
+          }
+        }
+      }
+    },
+    "offgrid": {
+      "polycab": {
+        "name": "Polycab Off-Grid",
+        "warranty": 8,
+        "pricingTiers": {
+          "3": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 42000
+          },
+          "3.6": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 47000
+          },
+          "5": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 58000
+          },
+          "6_1ph": {
+            "phase": "1Ph",
+            "mppt": 2,
+            "price": 64000
+          },
+          "5_3ph": {
+            "phase": "3Ph",
+            "mppt": 1,
+            "price": 82000
+          },
+          "6_3ph": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 88000
+          },
+          "8": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 102000
+          },
+          "10": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 118000
+          },
+          "12": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 138000
+          },
+          "15": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 158000
+          },
+          "20": {
+            "phase": "3Ph",
+            "mppt": 3,
+            "price": 198000
+          }
+        }
+      }
+    }
+  },
+  "batteryUsableFactor": 0.8333,
+  "batteries": {
+    "exide": {
+      "name": "Exide",
+      "warranty": 5,
+      "options": [
+        {
+          "id": "exide_100ah_12v",
+          "label": "100 AH 12V",
+          "ah": 100,
+          "voltage": 12,
+          "price": 10500
+        },
+        {
+          "id": "exide_150ah_12v",
+          "label": "150 AH 12V",
+          "ah": 150,
+          "voltage": 12,
+          "price": 14500
+        },
+        {
+          "id": "exide_200ah_12v",
+          "label": "200 AH 12V",
+          "ah": 200,
+          "voltage": 12,
+          "price": 19500
+        }
+      ]
+    },
+    "luminous": {
+      "name": "Luminous",
+      "warranty": 5,
+      "options": [
+        {
+          "id": "luminous_100ah_12v",
+          "label": "100 AH 12V",
+          "ah": 100,
+          "voltage": 12,
+          "price": 9800
+        },
+        {
+          "id": "luminous_150ah_12v",
+          "label": "150 AH 12V",
+          "ah": 150,
+          "voltage": 12,
+          "price": 13800
+        },
+        {
+          "id": "luminous_200ah_12v",
+          "label": "200 AH 12V",
+          "ah": 200,
+          "voltage": 12,
+          "price": 18600
+        }
+      ]
+    },
+    "livguard": {
+      "name": "Livguard",
+      "warranty": 5,
+      "options": [
+        {
+          "id": "livguard_150ah_12v",
+          "label": "150 AH 12V",
+          "ah": 150,
+          "voltage": 12,
+          "price": 13200
+        },
+        {
+          "id": "livguard_200ah_12v",
+          "label": "200 AH 12V",
+          "ah": 200,
+          "voltage": 12,
+          "price": 17900
+        }
+      ]
+    }
+  },
+  "batteryInverters": {
+    "luminous": {
+      "name": "Luminous",
+      "warranty": 2,
+      "options": [
+        {
+          "id": "luminous_bi_1kw",
+          "label": "1 kW",
+          "capacityKW": 1,
+          "price": 12500
+        },
+        {
+          "id": "luminous_bi_2kw",
+          "label": "2 kW",
+          "capacityKW": 2,
+          "price": 18500
+        },
+        {
+          "id": "luminous_bi_3kw",
+          "label": "3 kW",
+          "capacityKW": 3,
+          "price": 24500
+        },
+        {
+          "id": "luminous_bi_5kw",
+          "label": "5 kW",
+          "capacityKW": 5,
+          "price": 36500
+        }
+      ]
+    },
+    "exide": {
+      "name": "Exide",
+      "warranty": 2,
+      "options": [
+        {
+          "id": "exide_bi_2kw",
+          "label": "2 kW",
+          "capacityKW": 2,
+          "price": 19800
+        },
+        {
+          "id": "exide_bi_3kw",
+          "label": "3 kW",
+          "capacityKW": 3,
+          "price": 25800
+        },
+        {
+          "id": "exide_bi_5kw",
+          "label": "5 kW",
+          "capacityKW": 5,
+          "price": 37800
+        }
+      ]
+    },
+    "polycab": {
+      "name": "Polycab",
+      "warranty": 2,
+      "options": [
+        {
+          "id": "polycab_bi_2kw",
+          "label": "2 kW",
+          "capacityKW": 2,
+          "price": 21000
+        },
+        {
+          "id": "polycab_bi_3kw",
+          "label": "3 kW",
+          "capacityKW": 3,
+          "price": 27500
+        },
+        {
+          "id": "polycab_bi_5kw",
+          "label": "5 kW",
+          "capacityKW": 5,
+          "price": 39500
+        },
+        {
+          "id": "polycab_bi_7_5kw",
+          "label": "7.5 kW",
+          "capacityKW": 7.5,
+          "price": 52000
+        }
+      ]
+    }
+  },
+  "structureBrands": {
+    "tata": {
+      "name": "TATA",
+      "description": "TATA Structura GI material"
+    },
+    "apollo": {
+      "name": "Apollo",
+      "description": "Apollo GI material"
+    }
+  },
+  "components": {
+    "acdb-dcdb-combo": {
+      "brand": "POLYCAB",
+      "displayName": "ACDB + DCDB Combo - Polycab",
+      "pricing": {
+        "1ph_1_6": 2000,
+        "3ph_5_10": 3600,
+        "3ph_10_20": 5000
+      },
+      "description": "ACDB + DCDB Combo"
+    },
+    "earthing1mtr": {
+      "brand": "REPUTED",
+      "displayName": "Chemical Earthing - 1 Mtr",
+      "rate": 300,
+      "quantity": 3
+    },
+    "lightningArrester": {
+      "brand": "REPUTED",
+      "displayName": "Lightning Arrester",
+      "rate": 200,
+      "quantity": 1
+    },
+    "structure": {
+      "brand": "APOLLO / TATA",
+      "displayName": "GI Structure (72\u00d772, 60\u00d740, 40\u00d740)",
+      "pricingByCapacity": {
+        "3": 11509.3,
+        "4": 11509.3,
+        "5": 17659.2,
+        "6": 17659.2,
+        "7": 17659.2,
+        "8": 25099.6,
+        "9": 25099.6,
+        "10": 25099.6,
+        "11": 31249.5,
+        "12": 31249.5,
+        "13": 31249.5,
+        "14": 38689.9,
+        "15": 38689.9,
+        "16": 38689.9,
+        "17": 44839.8,
+        "18": 44839.8
+      },
+      "description": "Complete Structure (Legs, Rafters, Perlings, Base Plate, Bolts, Lockfixer, Fasteners)"
+    },
+    "earthingWire": {
+      "brand": "POLYCAB",
+      "displayName": {
+        "1ph": "Earthing Wire - Polycab Copper 2.5mm",
+        "3ph": "Earthing Wire - Polycab Copper 4mm"
+      },
+      "pricing": {
+        "1ph": {
+          "size": "2.5mm",
+          "ratePerMeter": 37
+        },
+        "3ph": {
+          "size": "4mm",
+          "ratePerMeter": 56
+        }
+      },
+      "baseLength": 50,
+      "perFloorExtra": 15,
+      "description": "Earthing Wire"
+    },
+    "dcWire": {
+      "brand": "POLYCAB",
+      "displayName": "DC Wire - Polycab Copper 4mm",
+      "size": "4mm",
+      "ratePerMeter": 56,
+      "baseLength": 30,
+      "perFloorExtra": 10,
+      "description": "DC Wire 4mm"
+    },
+    "blackPipe": {
+      "brand": "REPUTED",
+      "displayName": "Black Pipe (GI)",
+      "ratePerMeter": 18,
+      "description": "Black Pipe"
+    },
+    "chemicalBags": {
+      "brand": "REPUTED",
+      "displayName": "Chemical Bags (Earthing)",
+      "rate": 100,
+      "quantity": 1,
+      "description": "Chemical Bags"
+    },
+    "acWire": {
+      "brand": "POLYCAB",
+      "displayName": {
+        "1ph": "AC Armoured Cable - Polycab Copper 2 Core 6 Sq mm",
+        "3ph": "AC Armoured Cable - Polycab Copper 4 Core 10 Sq mm"
+      },
+      "pricing": {
+        "1ph": {
+          "size": "2 core 6 sq mm",
+          "ratePerMeter": 85
+        },
+        "3ph": {
+          "size": "4 core 10 sq mm",
+          "ratePerMeter": 125
+        }
+      },
+      "length": 5,
+      "description": "AC Armoured Cable"
+    },
+    "pvcDucting": {
+      "brand": "REPUTED",
+      "displayName": "PVC Ducting (45\u00d745 - 1Mtr)",
+      "rate": 90,
+      "quantity": 1,
+      "description": "PVC DUCTING (45*45-1MTR)"
+    },
+    "mc4Connector": {
+      "brand": "REPUTED",
+      "displayName": "MC4 Connectors",
+      "rate": 20,
+      "quantity": 13
+    },
+    "solarMeter": {
+      "brand": "L&T / HPL",
+      "displayName": "Solar Meter - L&T / HPL",
+      "pricing": {
+        "1ph": 2050,
+        "3ph": 3050
+      }
+    }
+  },
+  "additionalCharges": {
+    "vendorLoginCharges": 0,
+    "transportation": 3000,
+    "miscellaneous": 3000,
+    "discom": 2000,
+    "civilWorkMaterialPerKW": 500
+  },
+  "gstRate": 0.089,
+  "subsidy": {
+    "center": {
+      "1": 30000,
+      "2": 60000,
+      "3+": 78000
+    },
+    "state": 17000
+  }
+}

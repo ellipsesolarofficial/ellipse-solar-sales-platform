@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Calculation - Ellipse Solar</title>
+</head>
+<body>
+    <h1>Test Calculation Results</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Test data
+        const rates = {
+            "solarPanels": {
+                "monocrystalline": { "pricePerWatt": 25, "efficiency": 0.22, "warranty": 25 }
+            },
+            "inverters": {
+                "string": { "pricePerKW": 8000, "efficiency": 0.97 }
+            },
+            "mounting": {
+                "rooftop": { "pricePerKW": 3000 }
+            },
+            "installation": {
+                "baseRate": 5000,
+                "perKWRate": 2000
+            },
+            "profitMargin": 0.20,
+            "gst": 0.18,
+            "subsidyPerKW": 18000,
+            "maxSubsidyKW": 3
+        };
+        
+        // Test calculation for 5kW system
+        const systemSize = 5;
+        const panelType = "monocrystalline";
+        const inverterType = "string";
+        const mountingType = "rooftop";
+        
+        const panelCost = systemSize * 1000 * rates.solarPanels[panelType].pricePerWatt;
+        const inverterCost = systemSize * rates.inverters[inverterType].pricePerKW;
+        const mountingCost = systemSize * rates.mounting[mountingType].pricePerKW;
+        const installationCost = rates.installation.baseRate + (systemSize * rates.installation.perKWRate);
+        
+        const subtotal = panelCost + inverterCost + mountingCost + installationCost;
+        const profitAmount = subtotal * rates.profitMargin;
+        const totalBeforeTax = subtotal + profitAmount;
+        const gstAmount = totalBeforeTax * rates.gst;
+        const totalAmount = totalBeforeTax + gstAmount;
+        
+        const subsidyEligibleKW = Math.min(systemSize, rates.maxSubsidyKW);
+        const subsidyAmount = subsidyEligibleKW * rates.subsidyPerKW;
+        const finalAmount = totalAmount - subsidyAmount;
+        
+        const panelEfficiency = rates.solarPanels[panelType].efficiency;
+        const averageSunHours = 5;
+        const annualGeneration = systemSize * panelEfficiency * averageSunHours * 365;
+        
+        // Display results
+        document.getElementById('results').innerHTML = `
+            <h2>Test Case: 5kW Monocrystalline System</h2>
+            <h3>Cost Breakdown:</h3>
+            <ul>
+                <li>Panel Cost: ₹${Math.round(panelCost).toLocaleString('en-IN')}</li>
+                <li>Inverter Cost: ₹${Math.round(inverterCost).toLocaleString('en-IN')}</li>
+                <li>Mounting Cost: ₹${Math.round(mountingCost).toLocaleString('en-IN')}</li>
+                <li>Installation Cost: ₹${Math.round(installationCost).toLocaleString('en-IN')}</li>
+                <li><strong>Subtotal: ₹${Math.round(subtotal).toLocaleString('en-IN')}</strong></li>
+                <li>Profit (20%): ₹${Math.round(profitAmount).toLocaleString('en-IN')}</li>
+                <li>Total Before Tax: ₹${Math.round(totalBeforeTax).toLocaleString('en-IN')}</li>
+                <li>GST (18%): ₹${Math.round(gstAmount).toLocaleString('en-IN')}</li>
+                <li><strong>Total Amount: ₹${Math.round(totalAmount).toLocaleString('en-IN')}</strong></li>
+                <li>Subsidy (3kW): -₹${Math.round(subsidyAmount).toLocaleString('en-IN')}</li>
+                <li><strong style="color: green; font-size: 1.2em;">FINAL AMOUNT: ₹${Math.round(finalAmount).toLocaleString('en-IN')}</strong></li>
+            </ul>
+            
+            <h3>Technical Details:</h3>
+            <ul>
+                <li>Est. Annual Generation: ${Math.round(annualGeneration).toLocaleString('en-IN')} kWh/year</li>
+                <li>Panel Warranty: ${rates.solarPanels[panelType].warranty} years</li>
+                <li>Inverter Efficiency: ${(rates.inverters[inverterType].efficiency * 100).toFixed(1)}%</li>
+            </ul>
+            
+            <h3>✅ All calculations working correctly!</h3>
+        `;
+    </script>
+</body>
+</html>

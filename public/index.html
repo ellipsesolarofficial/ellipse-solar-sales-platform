@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ellipse Solar - Sales Portal</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="company_logo.png" alt="Ellipse Solar" class="company-logo" loading="eager">
+                <div class="logo-text">
+                    <h1 style="font-size: 1.1em;">Solar Installation Quotation Calculator</h1>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <h2>Generate Solar Quotation</h2>
+                
+                <form id="quotationForm">
+                    <div class="form-section">
+                        <h3>Customer Information</h3>
+                        
+                        <div class="form-group">
+                            <label for="customerName">Customer Name</label>
+                            <input type="text" id="customerName" name="customerName">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">Address</label>
+                            <input type="text" id="location" name="location" placeholder="Full address">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phoneNumber">WhatsApp Number (with country code)</label>
+                            <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="91XXXXXXXXXX">
+                            <small>e.g., 919876543210 (Optional - for sending quotation)</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Bill-Based System Recommendation</h3>
+                        
+                        <div class="form-group">
+                            <label for="monthlyBill">Average Monthly Electricity Bill (₹)</label>
+                            <input type="number" id="monthlyBill" name="monthlyBill" min="0" step="100" placeholder="e.g., 3000">
+                            <small>Enter your average monthly bill to get a recommended system size</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="freeUnits">State Govt. Free 100 Units?</label>
+                            <select id="freeUnits" name="freeUnits">
+                                <option value="yes" selected>Yes - Getting 100 free units</option>
+                                <option value="no">No - Not getting free units</option>
+                            </select>
+                        </div>
+
+                        <div id="billRecommendation" style="display: none; background: #f0fff4; padding: 16px; border-radius: 8px; border: 1px solid #00D09C; margin-top: 10px;">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: #00895e;">📊 Recommendation:</div>
+                            <div id="billRecommendationText"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>System Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label for="systemType">System Type *</label>
+                            <select id="systemType" name="systemType" required>
+                                <option value="ongrid" selected>On-Grid</option>
+                                <option value="offgrid">Off-Grid</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                            <small>Off-Grid and Hybrid systems use their own inverters and need batteries</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="systemSize">System Capacity (kW) *</label>
+                            <select id="systemSize" name="systemSize" required>
+                                <option value="3">3 kW</option>
+                                <option value="4">4 kW</option>
+                                <option value="5" selected>5 kW</option>
+                                <option value="6">6 kW</option>
+                                <option value="7">7 kW</option>
+                                <option value="8">8 kW</option>
+                                <option value="9">9 kW</option>
+                                <option value="10">10 kW</option>
+                                <option value="11">11 kW</option>
+                                <option value="12">12 kW</option>
+                                <option value="13">13 kW</option>
+                                <option value="14">14 kW</option>
+                                <option value="15">15 kW</option>
+                                <option value="16">16 kW</option>
+                                <option value="17">17 kW</option>
+                                <option value="18">18 kW</option>
+                                <option value="19">19 kW</option>
+                                <option value="20">20 kW</option>
+                            </select>
+                            <small>Select system capacity from 3kW to 20kW</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phaseType">Phase Type *</label>
+                            <select id="phaseType" name="phaseType" required>
+                                <option value="1ph" selected>1 Phase</option>
+                                <option value="3ph">3 Phase</option>
+                            </select>
+                            <small>Select based on your electrical connection</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Panel Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label for="panelBrand">Panel Brand *</label>
+                            <select id="panelBrand" name="panelBrand" required onchange="updatePanelCapacityOptions()">
+                                <option value="ina" selected>INA</option>
+                                <option value="adani">Adani</option>
+                                <option value="waree">Waaree</option>
+                                <option value="tata">Tata</option>
+                                <option value="renewsys">Renewsys</option>
+                                <option value="premier">Premier</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="panelCategory">DCR / Non-DCR *</label>
+                            <select id="panelCategory" name="panelCategory" required>
+                                <option value="dcr" selected>DCR (Domestic Content)</option>
+                                <option value="nonDcr">Non-DCR (Imported Cells)</option>
+                                <option value="mixed">Mixed (DCR + Non-DCR)</option>
+                            </select>
+                            <small>DCR panels are required for government subsidy eligibility</small>
+                        </div>
+
+                        <div class="form-group" id="mixedSplitGroup" style="display: none;">
+                            <label>Capacity Split (kW) *</label>
+                            <div style="display: flex; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <label for="dcrCapacity" style="font-size: 0.9em; font-weight: 500;">DCR</label>
+                                    <input type="number" id="dcrCapacity" name="dcrCapacity" min="0" step="0.5" value="3">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label for="nonDcrCapacity" style="font-size: 0.9em; font-weight: 500;">Non-DCR</label>
+                                    <input type="number" id="nonDcrCapacity" name="nonDcrCapacity" min="0" step="0.5" value="2">
+                                </div>
+                            </div>
+                            <small id="mixedSplitHint">Both parts must add up to the selected system capacity</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="panelType">Panel Type *</label>
+                            <select id="panelType" name="panelType" required onchange="updatePanelCapacityByType()">
+                                <option value="monoperc_bifacial">MonoPERC Bifacial</option>
+                                <option value="topcon_bifacial" selected>TOPCon Bifacial</option>
+                            </select>
+                            <small>Select panel technology type</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="panelCapacity">Panel Capacity (Watts) *</label>
+                            <select id="panelCapacity" name="panelCapacity" required>
+                            </select>
+                            <small>Available wattages for the selected brand and panel type</small>
+                        </div>
+
+                        <div class="form-group" id="panelCountDisplay" style="background: #f0f7ff; padding: 16px; border-radius: 8px; margin-top: 10px;">
+                            <div style="margin-bottom: 8px;">
+                                <strong>Recommended Panel Configuration:</strong>
+                            </div>
+                            <div id="panelCountValue" style="font-size: 1.1em; color: #00D09C; font-weight: 600; margin-bottom: 8px;">
+                                9 panels = 5.175 kW
+                            </div>
+                            <div id="panelAlternatives" style="font-size: 0.9em; color: #666; line-height: 1.6;">
+                                <div style="margin-bottom: 4px;">
+                                    <span style="color: #E55D00;">↓ 8 panels = 4.6 kW</span> <span style="font-size: 0.85em;">(0.4 kW less)</span>
+                                </div>
+                                <div>
+                                    <span style="color: #0088CC;">↑ 10 panels = 5.75 kW</span> <span style="font-size: 0.85em;">(0.75 kW extra)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Inverter Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label for="inverterCapacity">Inverter Capacity (kW) *</label>
+                            <input type="number" id="inverterCapacity" name="inverterCapacity" min="1" max="25" step="0.5" value="5" required>
+                            <small>Usually same as system capacity or slightly higher</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inverterBrand">Inverter Brand</label>
+                            <select id="inverterBrand" name="inverterBrand" required>
+                                <option value="polycab" selected>Polycab</option>
+                            </select>
+                            <small id="inverterBrandHint">Options depend on the selected system type</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section" id="batterySection">
+                        <h3>Battery Bank</h3>
+
+                        <div class="form-group">
+                            <label for="batteryBackup">Battery Backup Required? *</label>
+                            <select id="batteryBackup" name="batteryBackup" required>
+                                <option value="no" selected>No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+
+                        <div id="batteryOptionsGroup" style="display: none;">
+                            <div class="form-group">
+                                <label for="batteryBrand">Battery Brand</label>
+                                <select id="batteryBrand" name="batteryBrand"></select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="batteryOption">Battery Capacity</label>
+                                <select id="batteryOption" name="batteryOption"></select>
+                                <small>Capacities available for the selected brand</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="batteryQuantity">Quantity</label>
+                                <input type="number" id="batteryQuantity" name="batteryQuantity" min="1" step="1" value="2">
+                                <small id="batteryTotalHint">Total usable capacity of the battery bank</small>
+                            </div>
+
+                            <div id="batteryInverterGroup" style="display: none;">
+                                <h4 style="margin: 18px 0 10px; font-size: 0.95em;">Inverter for Batteries</h4>
+                                <div class="form-group">
+                                    <label for="batteryInverterBrand">Battery Inverter Brand</label>
+                                    <select id="batteryInverterBrand" name="batteryInverterBrand"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="batteryInverterOption">Battery Inverter Capacity</label>
+                                    <select id="batteryInverterOption" name="batteryInverterOption"></select>
+                                    <small>Capacities available for the selected brand</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Structure & Installation Details</h3>
+                        
+                        <div class="form-group">
+                            <label for="structureBrand">Structure Brand *</label>
+                            <select id="structureBrand" name="structureBrand" required>
+                                <option value="tata" selected>TATA</option>
+                                <option value="apollo">Apollo</option>
+                            </select>
+                            <small>Mounting structure material brand</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="siteType">Installation Type *</label>
+                            <select id="siteType" name="siteType" required>
+                                <option value="standard" selected>Standard Site (Rooftop)</option>
+                                <option value="special">Special Requirements</option>
+                                <option value="ground">Ground Mounting</option>
+                            </select>
+                            <small>Special requirements may affect structure and wiring costs</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="numberOfFloors">Number of Floors *</label>
+                            <select id="numberOfFloors" name="numberOfFloors" required>
+                                <option value="1" selected>1 Floor</option>
+                                <option value="2">2 Floors</option>
+                                <option value="3">3 Floors</option>
+                                <option value="4">4 Floors</option>
+                                <option value="5">5 Floors</option>
+                                <option value="6">6 Floors</option>
+                                <option value="7">7 Floors</option>
+                                <option value="8">8 Floors</option>
+                                <option value="9">9 Floors</option>
+                                <option value="10">10 Floors</option>
+                            </select>
+                            <small>Affects earthing wire and cabling requirements</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <details>
+                            <summary style="cursor: pointer; font-weight: 600; padding: 8px 0;">For Sales Person</summary>
+                            <div style="margin-top: 12px;">
+                                <div class="form-group">
+                                    <label for="adminCode">Access Code</label>
+                                    <input type="password" id="adminCode" name="adminCode" placeholder="Enter code to view breakdown">
+                                </div>
+                                <div class="form-group">
+                                    <label for="commission">Sales Category</label>
+                                    <select id="commission" name="commission">
+                                        <option value="0">None</option>
+                                        <option value="1000">S1</option>
+                                        <option value="2000">S2</option>
+                                        <option value="3000">S3</option>
+                                        <option value="4000">S4</option>
+                                        <option value="5000">S5</option>
+                                        <option value="6000">S6</option>
+                                        <option value="7000">S7</option>
+                                        <option value="8000">S8</option>
+                                        <option value="9000">S9</option>
+                                        <option value="10000" selected>S10</option>
+                                        <option value="11000">S11</option>
+                                        <option value="12000">S12</option>
+                                        <option value="13000">S13</option>
+                                        <option value="14000">S14</option>
+                                        <option value="15000">S15</option>
+                                        <option value="16000">S16</option>
+                                        <option value="17000">S17</option>
+                                        <option value="18000">S18</option>
+                                        <option value="19000">S19</option>
+                                        <option value="20000">S20</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="discount">Discount</label>
+                                    <select id="discount" name="discount">
+                                        <option value="0" selected>None</option>
+                                        <option value="1000">D1</option>
+                                        <option value="2000">D2</option>
+                                        <option value="3000">D3</option>
+                                        <option value="4000">D4</option>
+                                        <option value="5000">D5</option>
+                                        <option value="6000">D6</option>
+                                        <option value="7000">D7</option>
+                                        <option value="8000">D8</option>
+                                        <option value="9000">D9</option>
+                                        <option value="10000">D10</option>
+                                        <option value="11000">D11</option>
+                                        <option value="12000">D12</option>
+                                        <option value="13000">D13</option>
+                                        <option value="14000">D14</option>
+                                        <option value="15000">D15</option>
+                                        <option value="16000">D16</option>
+                                        <option value="17000">D17</option>
+                                        <option value="18000">D18</option>
+                                        <option value="19000">D19</option>
+                                        <option value="20000">D20</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Loan & Subsidy Calculator</h3>
+                        
+                        <div class="form-group">
+                            <label for="availLoan">Avail Loan?</label>
+                            <select id="availLoan" name="availLoan">
+                                <option value="yes" selected>Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="loanDuration">Loan Duration (Years)</label>
+                            <select id="loanDuration" name="loanDuration">
+                                <option value="3">3 Years</option>
+                                <option value="4">4 Years</option>
+                                <option value="5">5 Years</option>
+                                <option value="6">6 Years</option>
+                                <option value="7">7 Years</option>
+                                <option value="8">8 Years</option>
+                                <option value="9">9 Years</option>
+                                <option value="10" selected>10 Years</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="availStateSubsidy">Avail State Subsidy (₹17,000)?</label>
+                            <select id="availStateSubsidy" name="availStateSubsidy">
+                                <option value="no" selected>No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+
+                        <div id="loanDetails" style="display: none; background: #f0f7ff; padding: 16px; border-radius: 8px; border: 1px solid #0088CC; margin-top: 10px;">
+                            <div style="font-weight: 600; margin-bottom: 12px; color: #0055aa;">💰 Loan & Savings Summary</div>
+                            <div id="loanSummaryContent"></div>
+                            <div id="loanChart" style="margin-top: 16px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" id="calculateBtn">
+                            Calculate Estimate
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Generate Quotation & PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="result-container" id="resultContainer" style="display: none;">
+                <!-- Summary Card -->
+                <div class="summary-card">
+                    <h3>Final Amount</h3>
+                    <div class="amount" id="quoteFinalAmountSummary">₹0</div>
+                    <div class="subtitle">After subsidy & taxes</div>
+                </div>
+                
+                <h2>Quotation Summary</h2>
+                
+                <div class="quote-card">
+                    <div class="quote-header">
+                        <h3 id="quoteCustomerName"></h3>
+                        <p id="quoteDate"></p>
+                    </div>
+
+                    <div class="quote-specs">
+                        <h4>System Specifications</h4>
+                        <div class="spec-grid">
+                            <div class="spec-item">
+                                <span class="spec-label">Capacity:</span>
+                                <span class="spec-value" id="quoteSize"></span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Panel Type:</span>
+                                <span class="spec-value" id="quotePanelType"></span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Inverter:</span>
+                                <span class="spec-value" id="quoteInverterType"></span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Mounting:</span>
+                                <span class="spec-value" id="quoteMountingType"></span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Annual Generation:</span>
+                                <span class="spec-value" id="quoteGeneration"></span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Warranty:</span>
+                                <span class="spec-value" id="quoteWarranty"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quote-specs" style="margin-top: 15px;">
+                        <h4>Bill of Material</h4>
+                        <div id="quoteMaterialList" style="font-size: 0.9em; line-height: 1.8;"></div>
+                    </div>
+
+                    <div class="quote-breakdown">
+                        <h4>Cost Breakdown</h4>
+                        <table class="breakdown-table">
+                            <tbody>
+                                <!-- Dynamic content will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="quote-actions" id="quoteActions">
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Generating quotation...</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Ellipse Solar. All rights reserved.</p>
+            <p>Contact: info@ellipsesolar.com | +91-XXXXXXXXXX</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
