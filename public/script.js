@@ -341,7 +341,7 @@ function showLoanDetails(finalAmount) {
     const availStateSubsidy = document.getElementById('availStateSubsidy').value === 'yes';
     const loanDuration = parseInt(document.getElementById('loanDuration').value) || 10;
     const loanDetailsDiv = document.getElementById('loanDetails');
-    const systemSize = parseFloat(document.getElementById('systemSize').value) || 5;
+    const systemSize = parseFloat(document.getElementById('systemSize').value) || 3;
     
     if (availLoan !== 'yes') {
         loanDetailsDiv.style.display = 'none';
@@ -1990,7 +1990,7 @@ For queries, contact us at info@ellipsesolar.com`;
 // Send quotation summary via WhatsApp (triggered from Calculate button)
 function sendQuotationWhatsApp(phoneNumber) {
     const customerName = document.getElementById('customerName').value || '';
-    const systemSize = document.getElementById('systemSize').value || '5';
+    const systemSize = document.getElementById('systemSize').value || '3';
     const finalAmountEl = document.getElementById('quoteFinalAmountSummary');
     const finalAmount = finalAmountEl ? finalAmountEl.textContent : '';
     
