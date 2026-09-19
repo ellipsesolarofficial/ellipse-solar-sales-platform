@@ -1153,13 +1153,17 @@ function calculateQuotation(params) {
     let batteryBaseCost = 0;
     
     if (batteryBackup === 'yes' && numBatteryQuantity > 0) {
-        const batteryBrandConfig = rates.batteries[batteryBrand] || Object.values(rates.batteries)[0];
+        const chemistryKey = batteryChemistry || (rates.batteries[batteryBrand] && rates.batteries[batteryBrand].chemistry) || 'lead_acid';
+        const chemistryBrands = getBatteriesForChemistry(chemistryKey);
+        const requestedBrand = rates.batteries[batteryBrand];
+        const batteryBrandConfig = (requestedBrand && (requestedBrand.chemistry || 'lead_acid') === chemistryKey)
+            ? requestedBrand
+            : (chemistryBrands[0] && chemistryBrands[0][1]) || Object.values(rates.batteries)[0];
         const selectedOption = (batteryBrandConfig.options || []).find(o => o.id === batteryOption)
             || (batteryBrandConfig.options || [])[0];
         
         if (selectedOption) {
-            const chemistryKey = batteryBrandConfig.chemistry || batteryChemistry || 'lead_acid';
-            const chemistryConfig = getBatteryChemistryConfig(chemistryKey);
+            const chemistryConfig = getBatteryChemistryConfig(batteryBrandConfig.chemistry || chemistryKey);
             batteryBaseCost = selectedOption.price * numBatteryQuantity;
             batteryDetails = {
                 brand: batteryBrandConfig.name,
@@ -1339,6 +1343,11 @@ function calculateQuotation(params) {
             comp.quantity = panelCount + 4;
         }
         
+        // Drain clips: 2 per panel (30mm universal)
+        if (key === 'drainClip') {
+            comp.quantity = panelCount * (comp.quantityPerPanel || 2);
+        }
+        
         const baseCost = (comp.rate || 0) * (comp.quantity || 0);
         const total = baseCost;
         
@@ -1512,6 +1521,7 @@ function displayQuotation(data) {
         ['DC Wire', getDisplayName(rc.dcWire, 'DC Wire')],
         ['AC Cable', getDisplayName(rc.acWire, 'AC Cable')],
         ['MC4 Connectors', `${getDisplayName(rc.mc4Connector, 'MC4 Connectors')} - ${q.panelCount + 4} Pairs`],
+        ['Drain Clip', `${getDisplayName(rc.drainClip, 'Universal Drain Clip (30 MM)')} - ${q.panelCount * ((rc.drainClip && rc.drainClip.quantityPerPanel) || 2)} Pcs`],
         ['Lightning Arrester', getDisplayName(rc.lightningArrester, 'Lightning Arrester')],
         ['Solar Meter', getDisplayName(rc.solarMeter, 'L&T / HPL')]
     ];
@@ -1770,7 +1780,8 @@ function generatePDF(quotation) {
     const brandConfig = rates.solarPanels[q.panelBrand] || { name: 'INA' };
     const brandName = brandConfig.name;
     const dcWireSpec = '1C x 4 SQmm Copper';
-    const acWireSpec = phaseText === '1Ph' ? '2C x 6 SQmm Copper' : '4C x 10 SQmm Copper';
+    const acWireSpec = phaseText === '1Ph' ? '2C x 6 SQmm Aluminium' : '4C x 10 SQmm Copper';
+    const drainClipQty = q.panelCount * ((rates.components.drainClip && rates.components.drainClip.quantityPerPanel) || 2);
     
     // BOM rows - modules always collapse into a single row; DCR/Non-DCR split is internal only
     const panelCapacityLabel = q.systemSize + ' kW';
@@ -1782,6 +1793,7 @@ function generatePDF(quotation) {
         ['Complete Set of Structure', 'G.I Standard (Tata/Apollo)', 'As per MNRE Standards', '1 Set'],
         ['DC Cable', 'Polycab', dcWireSpec, 'As per Site'],
         ['Armoured Cable', 'Polycab', acWireSpec, 'As per Site'],
+        ['Drain Clip', 'Universal 30mm', '30 MM', String(drainClipQty)],
         ['Earthing Set with LA', 'Standard', 'Set', '3'],
         ['DCDB', 'Polycab', 'Set', '1'],
         ['ACDB', 'Polycab', 'Set', '1'],

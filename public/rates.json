@@ -960,7 +960,7 @@
       "brand": "POLYCAB",
       "displayName": "ACDB + DCDB Combo - Polycab",
       "pricing": {
-        "1ph_1_6": 2000,
+        "1ph_1_6": 1600,
         "3ph_5_10": 3600,
         "3ph_10_20": 5000
       },
@@ -969,13 +969,13 @@
     "earthing1mtr": {
       "brand": "REPUTED",
       "displayName": "Chemical Earthing - 1 Mtr",
-      "rate": 300,
+      "rate": 147,
       "quantity": 3
     },
     "lightningArrester": {
       "brand": "REPUTED",
       "displayName": "Lightning Arrester",
-      "rate": 200,
+      "rate": 240,
       "quantity": 1
     },
     "structure": {
@@ -1032,27 +1032,27 @@
     },
     "blackPipe": {
       "brand": "REPUTED",
-      "displayName": "Black Pipe (GI)",
-      "ratePerMeter": 18,
-      "description": "Black Pipe"
+      "displayName": "Drip Pipe 16mm",
+      "ratePerMeter": 8,
+      "description": "Drip Pipe 16mm"
     },
     "chemicalBags": {
       "brand": "REPUTED",
       "displayName": "Chemical Bags (Earthing)",
-      "rate": 100,
+      "rate": 80,
       "quantity": 1,
       "description": "Chemical Bags"
     },
     "acWire": {
       "brand": "POLYCAB",
       "displayName": {
-        "1ph": "AC Armoured Cable - Polycab Copper 2 Core 6 Sq mm",
+        "1ph": "AC Armoured Cable - Polycab Aluminium 2 Core 6 Sq mm",
         "3ph": "AC Armoured Cable - Polycab Copper 4 Core 10 Sq mm"
       },
       "pricing": {
         "1ph": {
-          "size": "2 core 6 sq mm",
-          "ratePerMeter": 85
+          "size": "2 core 6 sq mm ALU",
+          "ratePerMeter": 78
         },
         "3ph": {
           "size": "4 core 10 sq mm",
@@ -1065,21 +1065,28 @@
     "pvcDucting": {
       "brand": "REPUTED",
       "displayName": "PVC Ducting (45\u00d745 - 1Mtr)",
-      "rate": 90,
+      "rate": 80,
       "quantity": 1,
       "description": "PVC DUCTING (45*45-1MTR)"
     },
     "mc4Connector": {
       "brand": "REPUTED",
       "displayName": "MC4 Connectors",
-      "rate": 20,
+      "rate": 18.5,
       "quantity": 13
+    },
+    "drainClip": {
+      "brand": "REPUTED",
+      "displayName": "Universal Drain Clip (30 MM)",
+      "rate": 9.7,
+      "quantityPerPanel": 2,
+      "description": "Universal Drain Clip (30 MM)"
     },
     "solarMeter": {
       "brand": "L&T / HPL",
       "displayName": "Solar Meter - L&T / HPL",
       "pricing": {
-        "1ph": 2050,
+        "1ph": 1850,
         "3ph": 3050
       }
     }
