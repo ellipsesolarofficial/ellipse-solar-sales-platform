@@ -21,7 +21,7 @@
           "pricePerWatt": 23.2
         },
         "nonDcr": {
-          "pricePerWatt": 22.15
+          "pricePerWatt": 13.5
         },
         "capacities": [
           600,
@@ -75,7 +75,7 @@
           "pricePerWatt": 28
         },
         "nonDcr": {
-          "pricePerWatt": 26.5
+          "pricePerWatt": 15
         },
         "capacities": [
           610,
@@ -129,7 +129,7 @@
           "pricePerWatt": 29
         },
         "nonDcr": {
-          "pricePerWatt": 26.5
+          "pricePerWatt": 14
         },
         "capacities": [
           570,
@@ -186,7 +186,7 @@
           "pricePerWatt": 30.5
         },
         "nonDcr": {
-          "pricePerWatt": 28.0
+          "pricePerWatt": 14.5
         },
         "capacities": [
           570,
@@ -243,7 +243,7 @@
           "pricePerWatt": 23.5
         },
         "nonDcr": {
-          "pricePerWatt": 21.0
+          "pricePerWatt": 14.5
         },
         "capacities": [
           570,
@@ -300,7 +300,7 @@
           "pricePerWatt": 24.75
         },
         "nonDcr": {
-          "pricePerWatt": 22.25
+          "pricePerWatt": 14.5
         },
         "capacities": [
           570,
