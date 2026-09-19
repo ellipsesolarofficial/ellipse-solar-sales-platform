@@ -1,0 +1,14 @@
+---
+description: Commit and push to GitHub after every requested change
+alwaysApply: true
+---
+
+# Push after every change
+
+When the user asks for any code, rates, or portal change, finish by committing the relevant files and pushing to `origin` on the current branch (usually `main`).
+
+- Do this without waiting to be asked again.
+- Do not include `.env`, credentials, or unrelated untracked files.
+- Do not include `.cursor/` unless the change is a rule they asked for.
+- Use a short commit message that says why the change was made.
+- After push, mention that Netlify will pick up `main`.
