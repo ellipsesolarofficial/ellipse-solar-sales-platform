@@ -57,40 +57,38 @@
       "name": "Adani",
       "monoperc": {
         "dcr": {
-          "pricePerWatt": 28
+          "pricePerWatt": 24.5
         },
         "nonDcr": {
           "pricePerWatt": 25.5
         },
         "capacities": [
-          540,
           545,
-          550
+          550,
+          555,
+          560
         ],
         "defaultCapacity": 545
       },
       "topcon": {
         "dcr": {
-          "pricePerWatt": 29
+          "pricePerWatt": 28
         },
         "nonDcr": {
           "pricePerWatt": 26.5
         },
         "capacities": [
-          570,
-          575,
-          580,
-          590,
-          600,
           610,
           615,
-          620
+          620,
+          625,
+          630
         ],
         "defaultCapacity": 610
       },
       "warranty": 25,
       "profitByCapacity": {
-        "3": 40500,
+        "3": 35000,
         "4": 50500,
         "5": 60500,
         "6": 68000,
@@ -147,7 +145,7 @@
       },
       "warranty": 25,
       "profitByCapacity": {
-        "3": 40500,
+        "3": 35000,
         "4": 50500,
         "5": 60500,
         "6": 68000,
