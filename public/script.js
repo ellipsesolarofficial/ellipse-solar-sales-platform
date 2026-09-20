@@ -449,7 +449,7 @@ function updateInverterBrands() {
 
 function getBatteryChemistryConfig(key) {
     const chemistries = rates.batteryChemistries || {};
-    return chemistries[key] || { name: 'Lead-Acid', usableFactor: rates.batteryUsableFactor || 0.8333 };
+    return chemistries[key] || { name: 'Lead-Acid' };
 }
 
 function getBatteriesForChemistry(chemistry) {
@@ -458,20 +458,14 @@ function getBatteriesForChemistry(chemistry) {
     );
 }
 
-function batteryUsableFactor(chemistry) {
-    const chem = getBatteryChemistryConfig(chemistry);
-    return chem.usableFactor || rates.batteryUsableFactor || 0.8333;
-}
-
-// Usable kWh for a battery: AH × V, kept at the chemistry's usable share
-function batteryKwh(ah, voltage, quantity, chemistry) {
-    const factor = batteryUsableFactor(chemistry);
-    const kwh = (ah * voltage * (quantity || 1) * factor) / 1000;
+// Battery kWh is the nameplate rating: AH × V / 1000
+function batteryKwh(ah, voltage, quantity) {
+    const kwh = (ah * voltage * (quantity || 1)) / 1000;
     return Math.round(kwh * 100) / 100;
 }
 
-function batteryOptionLabel(opt, chemistry) {
-    const kwh = batteryKwh(opt.ah, opt.voltage, 1, chemistry);
+function batteryOptionLabel(opt) {
+    const kwh = batteryKwh(opt.ah, opt.voltage, 1);
     return opt.model ? `${opt.label} · ${opt.model} (${kwh} kWh)` : `${opt.label} (${kwh} kWh)`;
 }
 
@@ -522,7 +516,7 @@ function updateBatteryOptions(resetBrand) {
     ((brandConfig && brandConfig.options) || []).forEach(opt => {
         const option = document.createElement('option');
         option.value = opt.id;
-        option.textContent = batteryOptionLabel(opt, chemistry);
+        option.textContent = batteryOptionLabel(opt);
         optionSelect.appendChild(option);
     });
     
@@ -582,11 +576,11 @@ function updateBatteryTotalHint() {
     const quantity = parseInt(document.getElementById('batteryQuantity').value) || 0;
     
     if (!selected || quantity <= 0) {
-        hint.textContent = 'Total usable capacity of the battery bank';
+        hint.textContent = 'Total capacity of the battery bank (AH × V)';
         return;
     }
     
-    hint.innerHTML = `<span style="color: #00895e;">${quantity} × ${selected.label} = ${batteryKwh(selected.ah, selected.voltage, quantity, selected.chemistryKey)} kWh total</span>`;
+    hint.innerHTML = `<span style="color: #00895e;">${quantity} × ${selected.label} = ${batteryKwh(selected.ah, selected.voltage, quantity)} kWh total</span>`;
 }
 
 // Resolve the currently selected battery option from the form
@@ -1175,8 +1169,8 @@ function calculateQuotation(params) {
                 voltage: selectedOption.voltage,
                 unitPrice: selectedOption.price,
                 quantity: numBatteryQuantity,
-                kwhPerUnit: batteryKwh(selectedOption.ah, selectedOption.voltage, 1, chemistryKey),
-                kwhTotal: batteryKwh(selectedOption.ah, selectedOption.voltage, numBatteryQuantity, chemistryKey),
+                kwhPerUnit: batteryKwh(selectedOption.ah, selectedOption.voltage, 1),
+                kwhTotal: batteryKwh(selectedOption.ah, selectedOption.voltage, numBatteryQuantity),
                 warranty: batteryBrandConfig.warranty,
                 total: Math.round(batteryBaseCost)
             };

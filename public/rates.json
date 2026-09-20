@@ -787,17 +787,14 @@
       }
     }
   },
-  "batteryUsableFactor": 0.8333,
   "batteryChemistries": {
     "lead_acid": {
       "name": "Lead-Acid",
-      "description": "Tubular lead-acid batteries for standard backup",
-      "usableFactor": 0.8333
+      "description": "Tubular lead-acid batteries for standard backup"
     },
     "lithium_ion": {
       "name": "Lithium-Ion (LiFePO4)",
-      "description": "Lithium iron phosphate batteries — longer life and higher usable capacity",
-      "usableFactor": 0.9
+      "description": "Lithium iron phosphate batteries — longer life and higher capacity"
     }
   },
   "batteries": {
