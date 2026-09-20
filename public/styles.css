@@ -230,6 +230,48 @@ main {
     color: var(--primary-color);
 }
 
+.panel-count-picker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 8px;
+}
+
+.panel-count-picker #panelCountValue {
+    flex: 1;
+    font-size: 1.1em;
+    color: #00D09C;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.35;
+    margin: 0;
+}
+
+.panel-count-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid var(--border-dark);
+    background: var(--bg-white);
+    color: var(--primary-color);
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.panel-count-btn:hover:not(:disabled) {
+    background: var(--primary-light);
+    border-color: var(--primary-color);
+}
+
+.panel-count-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
 /* Summary Card */
 .summary-card {
     background: linear-gradient(135deg, #E8621F 0%, #D4550F 100%);

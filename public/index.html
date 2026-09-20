@@ -175,17 +175,13 @@
                             <div style="margin-bottom: 8px;">
                                 <strong>Recommended Panel Configuration:</strong>
                             </div>
-                            <div id="panelCountValue" style="font-size: 1.1em; color: #00D09C; font-weight: 600; margin-bottom: 8px;">
-                                9 panels = 5.175 kW
+                            <div class="panel-count-picker">
+                                <button type="button" id="panelCountMinus" class="panel-count-btn" aria-label="Remove one panel">−</button>
+                                <div id="panelCountValue">9 panels = 5.175 kW</div>
+                                <button type="button" id="panelCountPlus" class="panel-count-btn" aria-label="Add one panel">+</button>
                             </div>
-                            <div id="panelAlternatives" style="font-size: 0.9em; color: #666; line-height: 1.6;">
-                                <div style="margin-bottom: 4px;">
-                                    <span style="color: #E55D00;">↓ 8 panels = 4.6 kW</span> <span style="font-size: 0.85em;">(0.4 kW less)</span>
-                                </div>
-                                <div>
-                                    <span style="color: #0088CC;">↑ 10 panels = 5.75 kW</span> <span style="font-size: 0.85em;">(0.75 kW extra)</span>
-                                </div>
-                            </div>
+                            <input type="hidden" id="panelCountOverride" name="panelCountOverride" value="">
+                            <div id="panelAlternatives" style="font-size: 0.9em; color: #666; line-height: 1.6;"></div>
                         </div>
                     </div>
 

@@ -416,6 +416,7 @@ function updatePanelCapacityByType() {
         panelCapacitySelect.appendChild(option);
     });
     
+    resetPanelCountAdjustment();
     updatePanelCount();
 }
 
@@ -628,6 +629,52 @@ function nearestPanelCount(targetKW, panelWattage) {
     return best < 1 ? 1 : best;
 }
 
+// Salesperson can add or remove panels from the recommended count
+let panelCountAdjustment = 0;
+const PANEL_COUNT_MAX_EXTRA = 15;
+
+function resetPanelCountAdjustment() {
+    panelCountAdjustment = 0;
+}
+
+function clampPanelCount(selected, recommended) {
+    const minPanels = 1;
+    const maxPanels = Math.max(recommended + PANEL_COUNT_MAX_EXTRA, minPanels);
+    return Math.min(maxPanels, Math.max(minPanels, selected));
+}
+
+function panelCapacityLine(panels, panelCapacity, systemWatts) {
+    const capacityW = panels * panelCapacity;
+    const diffW = capacityW - systemWatts;
+    let html = `${panels} panel${panels === 1 ? '' : 's'} = ${capacityW.toLocaleString()} W`;
+    if (Math.abs(diffW) > 10) {
+        html += diffW > 0
+            ? ` <span style="font-size: 0.9em; color: #0088CC;">(+${diffW.toLocaleString()} W extra)</span>`
+            : ` <span style="font-size: 0.9em; color: #E55D00;">(${diffW.toLocaleString()} W less)</span>`;
+    } else {
+        html += ` <span style="font-size: 0.9em; color: #00D09C;">✓ Perfect match!</span>`;
+    }
+    return { html, capacityW };
+}
+
+function syncPanelCountControls(selected, recommended) {
+    const overrideInput = document.getElementById('panelCountOverride');
+    const minusBtn = document.getElementById('panelCountMinus');
+    const plusBtn = document.getElementById('panelCountPlus');
+    const hint = document.getElementById('panelAlternatives');
+    
+    if (overrideInput) overrideInput.value = selected;
+    if (minusBtn) minusBtn.disabled = selected <= 1;
+    if (plusBtn) plusBtn.disabled = selected >= recommended + PANEL_COUNT_MAX_EXTRA;
+    
+    if (!hint) return;
+    if (selected === recommended) {
+        hint.innerHTML = `<span style="color: #666;">Use − / + to remove or add one panel from this recommendation.</span>`;
+    } else {
+        hint.innerHTML = `<span style="color: #0088CC;">Using ${selected} panels (recommended ${recommended}).</span>`;
+    }
+}
+
 // Read the DCR / Non-DCR selection, including a mixed capacity split
 function getPanelCategorySelection(systemSize) {
     const category = document.getElementById('panelCategory').value;
@@ -695,7 +742,7 @@ function validateMixedSplit() {
     return false;
 }
 
-// Dynamic panel count calculation with alternatives
+// Dynamic panel count calculation with ±1 adjustment from the recommendation
 function updatePanelCount() {
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 0;
     const panelCapacity = parseFloat(document.getElementById('panelCapacity').value) || 545;
@@ -704,7 +751,7 @@ function updatePanelCount() {
         const systemWatts = systemSize * 1000;
         const selection = getPanelCategorySelection(systemSize);
         
-        // Mixed split gets its own per-segment summary instead of ± alternatives
+        // Mixed split gets its own per-segment summary; ± still changes the total
         if (selection.category === 'mixed') {
             const segments = selection.segments.map(s => ({
                 label: s.key === 'nonDcr' ? 'Non-DCR' : 'DCR',
@@ -712,85 +759,40 @@ function updatePanelCount() {
                 panels: nearestPanelCount(s.kW, panelCapacity)
             }));
             
-            const totalPanels = segments.reduce((sum, s) => sum + s.panels, 0);
-            const totalW = totalPanels * panelCapacity;
-            const diffW = totalW - systemWatts;
+            const recommendedTotal = segments.reduce((sum, s) => sum + s.panels, 0) || 1;
+            const selectedTotal = clampPanelCount(recommendedTotal + panelCountAdjustment, recommendedTotal);
+            panelCountAdjustment = selectedTotal - recommendedTotal;
             
-            let mixedText = `${totalPanels} panels = ${totalW.toLocaleString()} W`;
-            if (Math.abs(diffW) > 10) {
-                mixedText += diffW > 0
-                    ? ` <span style="font-size: 0.9em; color: #0088CC;">(+${diffW.toLocaleString()} W extra)</span>`
-                    : ` <span style="font-size: 0.9em; color: #E55D00;">(${diffW.toLocaleString()} W less)</span>`;
-            } else {
-                mixedText += ` <span style="font-size: 0.9em; color: #00D09C;">✓ Perfect match!</span>`;
+            if (segments.length) {
+                const last = segments[segments.length - 1];
+                last.panels = Math.max(1, last.panels + panelCountAdjustment);
             }
             
-            document.getElementById('panelCountValue').innerHTML = mixedText;
-            document.getElementById('panelAlternatives').innerHTML = segments.map(s => `
+            const totalPanels = segments.reduce((sum, s) => sum + s.panels, 0);
+            panelCountAdjustment = totalPanels - recommendedTotal;
+            
+            const line = panelCapacityLine(totalPanels, panelCapacity, systemWatts);
+            document.getElementById('panelCountValue').innerHTML = line.html;
+            
+            const segmentHTML = segments.map(s => `
                 <div style="margin-bottom: 4px;">
                     <span style="color: #0088CC;">${s.label}: ${s.panels} panels = ${(s.panels * panelCapacity).toLocaleString()} W</span>
                     <span style="font-size: 0.85em;">(for ${s.requestedKW} kW)</span>
                 </div>
             `).join('');
+            syncPanelCountControls(totalPanels, recommendedTotal);
+            const hint = document.getElementById('panelAlternatives');
+            if (hint) hint.innerHTML = segmentHTML + hint.innerHTML;
             return;
         }
         
         const recommendedPanels = nearestPanelCount(systemSize, panelCapacity);
+        const selectedPanels = clampPanelCount(recommendedPanels + panelCountAdjustment, recommendedPanels);
+        panelCountAdjustment = selectedPanels - recommendedPanels;
         
-        // Calculate capacities in watts
-        const recommendedCapacityW = recommendedPanels * panelCapacity;
-        const minusPanels = Math.max(1, recommendedPanels - 1);
-        const plusPanels = recommendedPanels + 1;
-        
-        const minusCapacityW = minusPanels * panelCapacity;
-        const plusCapacityW = plusPanels * panelCapacity;
-        
-        const minusDiffW = systemWatts - minusCapacityW;
-        const plusDiffW = plusCapacityW - systemWatts;
-        const recommendedDiffW = recommendedCapacityW - systemWatts;
-        
-        // Update main recommendation
-        let mainText = `${recommendedPanels} panels = ${recommendedCapacityW.toLocaleString()} W`;
-        if (Math.abs(recommendedDiffW) > 10) { // Changed threshold to 10W instead of 0.01kW
-            if (recommendedDiffW > 0) {
-                mainText += ` <span style="font-size: 0.9em; color: #0088CC;">(+${recommendedDiffW.toLocaleString()} W extra)</span>`;
-            } else {
-                mainText += ` <span style="font-size: 0.9em; color: #E55D00;">(${recommendedDiffW.toLocaleString()} W less)</span>`;
-            }
-        } else {
-            mainText += ` <span style="font-size: 0.9em; color: #00D09C;">✓ Perfect match!</span>`;
-        }
-        
-        document.getElementById('panelCountValue').innerHTML = mainText;
-        
-        // Update alternatives
-        let alternativesHTML = '';
-        
-        // Show -1 panel option if it makes sense
-        if (minusPanels !== recommendedPanels) {
-            const minusStatus = minusDiffW >= 0 
-                ? `<span style="font-size: 0.85em; color: #E55D00;">(${minusDiffW.toLocaleString()} W less)</span>`
-                : `<span style="font-size: 0.85em; color: #0088CC;">(${Math.abs(minusDiffW).toLocaleString()} W extra)</span>`;
-            
-            alternativesHTML += `
-                <div style="margin-bottom: 4px;">
-                    <span style="color: #E55D00;">↓ ${minusPanels} panels = ${minusCapacityW.toLocaleString()} W</span> ${minusStatus}
-                </div>
-            `;
-        }
-        
-        // Show +1 panel option
-        const plusStatus = plusDiffW >= 0 
-            ? `<span style="font-size: 0.85em; color: #0088CC;">(${plusDiffW.toLocaleString()} W extra)</span>`
-            : `<span style="font-size: 0.85em; color: #E55D00;">(${Math.abs(plusDiffW).toLocaleString()} W less)</span>`;
-        
-        alternativesHTML += `
-            <div>
-                <span style="color: #0088CC;">↑ ${plusPanels} panels = ${plusCapacityW.toLocaleString()} W</span> ${plusStatus}
-            </div>
-        `;
-        
-        document.getElementById('panelAlternatives').innerHTML = alternativesHTML;
+        const line = panelCapacityLine(selectedPanels, panelCapacity, systemWatts);
+        document.getElementById('panelCountValue').innerHTML = line.html;
+        syncPanelCountControls(selectedPanels, recommendedPanels);
     }
 }
 
@@ -813,6 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update panel count when system size or panel capacity changes
     if (systemSizeSelect) {
         systemSizeSelect.addEventListener('change', function() {
+            resetPanelCountAdjustment();
             // Re-split a mixed selection across the new system size
             updateMixedSplitVisibility(true);
             updatePanelCount();
@@ -827,6 +830,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const panelCategorySelect = document.getElementById('panelCategory');
     if (panelCategorySelect) {
         panelCategorySelect.addEventListener('change', function() {
+            resetPanelCountAdjustment();
             updateMixedSplitVisibility(this.value === 'mixed');
             updatePanelCount();
         });
@@ -836,6 +840,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById(id);
         if (input) {
             input.addEventListener('input', function() {
+                resetPanelCountAdjustment();
                 validateMixedSplit();
                 updatePanelCount();
             });
@@ -880,8 +885,26 @@ document.addEventListener('DOMContentLoaded', function() {
         batteryQuantityInput.addEventListener('input', updateBatteryTotalHint);
     }
     
+    const panelCountMinus = document.getElementById('panelCountMinus');
+    const panelCountPlus = document.getElementById('panelCountPlus');
+    if (panelCountMinus) {
+        panelCountMinus.addEventListener('click', function() {
+            panelCountAdjustment -= 1;
+            updatePanelCount();
+        });
+    }
+    if (panelCountPlus) {
+        panelCountPlus.addEventListener('click', function() {
+            panelCountAdjustment += 1;
+            updatePanelCount();
+        });
+    }
+    
     if (panelCapacitySelect) {
-        panelCapacitySelect.addEventListener('change', updatePanelCount);
+        panelCapacitySelect.addEventListener('change', function() {
+            resetPanelCountAdjustment();
+            updatePanelCount();
+        });
     }
     
     if (panelBrandSelect) {
@@ -1043,7 +1066,8 @@ function calculateQuotation(params) {
         commission,
         discount,
         customerName, 
-        location 
+        location,
+        panelCountOverride
     } = params;
     
     // Ensure numeric values are properly parsed
@@ -1090,8 +1114,14 @@ function calculateQuotation(params) {
     }
     
     // Resolve each part into whole panels at its own rate
+    const overrideCount = parseInt(panelCountOverride, 10);
+    const hasOverride = Number.isInteger(overrideCount) && overrideCount >= 1;
+    
     const panelSegments = requestedSegments.map(s => {
-        const panels = nearestPanelCount(s.kW, numPanelCapacity);
+        let panels = nearestPanelCount(s.kW, numPanelCapacity);
+        if (hasOverride && requestedSegments.length === 1) {
+            panels = overrideCount;
+        }
         const pricePerWatt = rateFor(s.key);
         const capacityW = panels * numPanelCapacity;
         return {
@@ -1104,6 +1134,14 @@ function calculateQuotation(params) {
             cost: Math.round(pricePerWatt * capacityW)
         };
     });
+    
+    if (hasOverride && panelSegments.length > 1) {
+        const recommendedTotal = panelSegments.reduce((sum, s) => sum + s.panels, 0);
+        const last = panelSegments[panelSegments.length - 1];
+        last.panels = Math.max(1, last.panels + (overrideCount - recommendedTotal));
+        last.capacityW = last.panels * numPanelCapacity;
+        last.cost = Math.round(last.pricePerWatt * last.capacityW);
+    }
     
     const categoryLabel = isMixed
         ? panelSegments.map(s => `${s.requestedKW}kW ${s.label}`).join(' + ')
