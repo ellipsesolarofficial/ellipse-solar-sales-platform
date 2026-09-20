@@ -501,6 +501,122 @@
             "price": 302400
           }
         }
+      },
+      "solaire": {
+        "name": "Solaire",
+        "warranty": 10,
+        "pricingTiers": {
+          "2.5": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 15032
+          },
+          "3": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 15316
+          },
+          "3.3": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 15316
+          },
+          "4.2": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 19852
+          },
+          "5": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 25174
+          },
+          "5_2mppt": {
+            "phase": "1Ph",
+            "mppt": 2,
+            "price": 29551
+          },
+          "6": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 27189
+          },
+          "5_3ph": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 44362
+          },
+          "6_3ph": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 45793
+          },
+          "8": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 47224
+          },
+          "10": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 48655
+          },
+          "12": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 50452
+          },
+          "15": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 52454
+          },
+          "20": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 86254
+          },
+          "25": {
+            "phase": "3Ph",
+            "mppt": 3,
+            "price": 96664
+          },
+          "30": {
+            "phase": "3Ph",
+            "mppt": 3,
+            "price": 110513
+          },
+          "40": {
+            "phase": "3Ph",
+            "mppt": 4,
+            "price": 162086
+          },
+          "50": {
+            "phase": "3Ph",
+            "mppt": 5,
+            "price": 169453
+          },
+          "60": {
+            "phase": "3Ph",
+            "mppt": 6,
+            "price": 176820
+          },
+          "75": {
+            "phase": "3Ph",
+            "mppt": 9,
+            "price": 235760
+          },
+          "100": {
+            "phase": "3Ph",
+            "mppt": 9,
+            "price": 257862
+          },
+          "125": {
+            "phase": "3Ph",
+            "mppt": 12,
+            "price": 302066
+          }
+        }
       }
     },
     "hybrid": {
@@ -562,6 +678,47 @@
             "phase": "3Ph",
             "mppt": 3,
             "price": 245000
+          }
+        }
+      },
+      "solaire": {
+        "name": "Solaire Hybrid",
+        "warranty": 5,
+        "pricingTiers": {
+          "3": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 73481
+          },
+          "5": {
+            "phase": "1Ph",
+            "mppt": 1,
+            "price": 80406
+          },
+          "8": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 165268
+          },
+          "10": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 174450
+          },
+          "12": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 180963
+          },
+          "15": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 229539
+          },
+          "20": {
+            "phase": "3Ph",
+            "mppt": 2,
+            "price": 294979
           }
         }
       }
@@ -855,6 +1012,21 @@
           "price": 417300
         }
       ]
+    },
+    "solaire": {
+      "name": "Solaire",
+      "chemistry": "lithium_ion",
+      "warranty": 10,
+      "options": [
+        {
+          "id": "solaire_tp_ld51",
+          "model": "TP-LD51-BATT",
+          "label": "100 AH 51.2V",
+          "ah": 100,
+          "voltage": 51.2,
+          "price": 74999
+        }
+      ]
     }
   },
   "batteryInverters": {
@@ -939,6 +1111,54 @@
           "label": "7.5 kW",
           "capacityKW": 7.5,
           "price": 52000
+        }
+      ]
+    },
+    "solaire": {
+      "name": "Solaire",
+      "warranty": 5,
+      "options": [
+        {
+          "id": "solaire_bi_3kw",
+          "label": "3 kW (SH-GEN.S-3-LV)",
+          "capacityKW": 3,
+          "price": 73481
+        },
+        {
+          "id": "solaire_bi_5kw",
+          "label": "5 kW (SH-GEN.S-5-LV)",
+          "capacityKW": 5,
+          "price": 80406
+        },
+        {
+          "id": "solaire_bi_8kw",
+          "label": "8 kW (SH-GEN.X-8-LV)",
+          "capacityKW": 8,
+          "price": 165268
+        },
+        {
+          "id": "solaire_bi_10kw",
+          "label": "10 kW (SH-GEN.X-10-LV)",
+          "capacityKW": 10,
+          "price": 174450
+        },
+        {
+          "id": "solaire_bi_12kw",
+          "label": "12 kW (SH-GEN.X-12-LV)",
+          "capacityKW": 12,
+          "price": 180963
+        },
+        {
+          "id": "solaire_bi_15kw",
+          "label": "15 kW (SH-GEN.X-15-LV)",
+          "capacityKW": 15,
+          "price": 229539
+        },
+        {
+          "id": "solaire_bi_20kw",
+          "label": "20 kW (SH-GEN.X-20-LV)",
+          "capacityKW": 20,
+          "price": 294979
         }
       ]
     }
