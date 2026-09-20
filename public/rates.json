@@ -1311,7 +1311,8 @@
     "transportation": 2000,
     "miscellaneous": 3000,
     "discom": 2000,
-    "civilWorkMaterialPerKW": 500
+    "civilWorkMaterialPerKW": 500,
+    "batteryInstallation": 3000
   },
   "gstRate": 0.089,
   "subsidy": {

@@ -1364,6 +1364,10 @@ function calculateQuotation(params) {
     additionalCharges.civilWorkMaterial = Math.round(additionalCharges.civilWorkMaterialPerKW * numSystemSize);
     delete additionalCharges.civilWorkMaterialPerKW;
     
+    additionalCharges.batteryInstallation = batteryDetails
+        ? (Number(additionalCharges.batteryInstallation) || 3000)
+        : 0;
+    
     const totalAdditionalCharges = Object.values(additionalCharges).reduce((sum, val) => sum + val, 0);
     
     // 5. Profit for this brand at this system size
@@ -1435,6 +1439,7 @@ function calculateQuotation(params) {
             miscellaneous: additionalCharges.miscellaneous,
             discom: additionalCharges.discom,
             civilWorkMaterial: additionalCharges.civilWorkMaterial,
+            batteryInstallation: additionalCharges.batteryInstallation,
             totalAdditionalCharges: Math.round(totalAdditionalCharges),
             
             // Summary totals
@@ -1593,6 +1598,12 @@ function displayQuotation(data) {
                 <td>Transportation</td>
                 <td>${formatCurrency(q.breakdown.transportation)}</td>
             </tr>
+            ${q.breakdown.batteryInstallation > 0 ? `
+            <tr>
+                <td>Battery Installation</td>
+                <td>${formatCurrency(q.breakdown.batteryInstallation)}</td>
+            </tr>
+            ` : ''}
             <tr>
                 <td>Miscellaneous</td>
                 <td>${formatCurrency(q.breakdown.miscellaneous)}</td>
