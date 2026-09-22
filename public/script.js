@@ -1261,7 +1261,7 @@ function calculateQuotation(params) {
             return;
         }
         
-        // ACDB + DCDB combo - price depends on phase and system size
+        // ACDB + DCDB: Polycab list covers 1ph 1–6 kW and 3ph 5–10 kW only
         if (key === 'acdb-dcdb-combo') {
             let comboPrice = 2000; // default 1ph
             const phase = (phaseType === '3phase' || phaseType === '3ph') ? '3ph' : '1ph';
@@ -1560,7 +1560,7 @@ function displayQuotation(data) {
         ['MC4 Connectors', `${getDisplayName(rc.mc4Connector, 'MC4 Connectors')} - ${q.panelCount + 4} Pairs`],
         ['Drain Clip', `${getDisplayName(rc.drainClip, 'Universal Drain Clip (30 MM)')} - ${q.panelCount * ((rc.drainClip && rc.drainClip.quantityPerPanel) || 2)} Pcs`],
         ['Lightning Arrester', getDisplayName(rc.lightningArrester, 'Lightning Arrester')],
-        ['Solar Meter', getDisplayName(rc.solarMeter, 'L&T / HPL')]
+        ['Solar Meter', getDisplayName(rc.solarMeter, 'L&T / Lauritz Knudsen')]
     ];
     
     const materialListHTML = `
@@ -1841,7 +1841,7 @@ function generatePDF(quotation) {
         ['DCDB', 'Polycab', 'Set', '1'],
         ['ACDB', 'Polycab', 'Set', '1'],
         ['Balance of system', 'Standard', 'Set', 'As per System'],
-        ['Solar Meter', 'L&T / HPL', 'Set', '1']
+        ['Solar Meter', (rates.components.solarMeter && rates.components.solarMeter.brand) || 'L&T / Lauritz Knudsen', 'Set', '1']
     ].map((row, index) => [String(index + 1), ...row]);
     
     bomItems.forEach(item => {
