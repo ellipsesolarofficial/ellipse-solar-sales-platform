@@ -46,6 +46,7 @@ function initializeUI() {
     updateInverterBrands();
     updateBatteryOptions(true);
     updateKitMode();
+    fillStandardInverterOptions();
 }
 
 console.log('Script loaded, fetching configuration...');
@@ -533,25 +534,80 @@ function kitIncludeLabel(includes) {
 }
 
 function setInverterFieldMode(kitBased) {
-    const input = document.getElementById('inverterCapacity');
-    const select = document.getElementById('inverterCapacityKit');
     const hint = document.getElementById('inverterCapacityHint');
-    if (!input || !select) return;
+    if (!hint) return;
+    hint.textContent = kitBased
+        ? 'Only the inverter sizes sold with this kit capacity'
+        : 'Available inverter sizes for the selected brand and phase';
+}
 
-    if (kitBased) {
-        input.style.display = 'none';
-        input.removeAttribute('required');
-        select.style.display = '';
-        select.required = true;
-        if (hint) hint.textContent = 'Only the inverter sizes sold with this kit capacity';
-    } else {
-        select.style.display = 'none';
-        select.removeAttribute('required');
-        select.innerHTML = '';
-        input.style.display = '';
-        input.required = true;
-        if (hint) hint.textContent = 'Usually same as system capacity or slightly higher';
+function listBrandInverterTiers() {
+    const systemType = document.getElementById('systemType').value;
+    const brand = document.getElementById('inverterBrand').value;
+    const phaseKey = normalizePhase(document.getElementById('phaseType').value);
+    const phaseLabel = phaseKey === '3ph' ? '3Ph' : '1Ph';
+    const config = ((rates.inverters || {})[systemType] || {})[brand] || {};
+    const tiers = config.pricingTiers || {};
+    const rows = [];
+
+    Object.entries(tiers).forEach(([key, tier]) => {
+        if (tier.phase && tier.phase !== phaseLabel) return;
+        const kwMatch = String(key).match(/^(\d+\.?\d*)/);
+        const kw = parseFloat(tier.kw != null ? tier.kw : (kwMatch && kwMatch[1]));
+        if (!kw) return;
+        rows.push({
+            key,
+            kw,
+            mppt: tier.mppt,
+            label: `${kw} kW ${phaseKey === '3ph' ? '3 Phase' : '1 Phase'}${tier.mppt ? ` · ${tier.mppt} MPPT` : ''}`
+        });
+    });
+
+    rows.sort((a, b) => a.kw - b.kw || (a.mppt || 0) - (b.mppt || 0));
+    return rows;
+}
+
+function fillStandardInverterOptions() {
+    const select = document.getElementById('inverterCapacityKit');
+    const hidden = document.getElementById('inverterCapacity');
+    if (!select || isKitBrand(document.getElementById('panelBrand').value)) return;
+
+    const systemSize = parseFloat(document.getElementById('systemSize').value) || 3;
+    const previous = hidden ? parseFloat(hidden.value) : systemSize;
+    const tiers = listBrandInverterTiers();
+    const kitSkuInput = document.getElementById('kitSku');
+    if (kitSkuInput) kitSkuInput.value = '';
+
+    select.innerHTML = '';
+    if (!tiers.length) {
+        STANDARD_SYSTEM_SIZES.forEach(kw => {
+            const option = document.createElement('option');
+            option.value = String(kw);
+            option.dataset.kw = String(kw);
+            option.textContent = `${kw} kW`;
+            select.appendChild(option);
+        });
+        const keep = Math.round(previous || systemSize);
+        select.value = STANDARD_SYSTEM_SIZES.indexOf(keep) !== -1 ? String(keep) : String(systemSize);
+        if (hidden) hidden.value = select.value;
+        return;
     }
+
+    tiers.forEach(tier => {
+        const option = document.createElement('option');
+        option.value = tier.key;
+        option.dataset.kw = String(tier.kw);
+        option.textContent = tier.label;
+        select.appendChild(option);
+    });
+
+    const exact = tiers.find(tier => tier.kw === previous);
+    const closest = tiers.slice().sort((a, b) => (
+        Math.abs(a.kw - (previous || systemSize)) - Math.abs(b.kw - (previous || systemSize))
+    ))[0];
+    const chosen = exact || closest;
+    select.value = chosen.key;
+    if (hidden) hidden.value = String(chosen.kw);
 }
 
 function fillStandardSystemSizes(preferred) {
@@ -713,6 +769,7 @@ function restoreNonKitSelectors() {
     if (inverterSelect && (inverterSelect.value === 'kit' || (inverterSelect.options.length === 1 && inverterSelect.options[0].value === 'kit'))) {
         updateInverterBrands();
     }
+    fillStandardInverterOptions();
 }
 
 // Function to update panel capacity options based on brand and panel type
@@ -779,6 +836,7 @@ function updateInverterBrands() {
     const typeConfig = rates.systemTypes[systemType];
     document.getElementById('inverterBrandHint').textContent =
         `${typeConfig ? typeConfig.name : 'On-Grid'} inverter pricing`;
+    fillStandardInverterOptions();
 }
 
 function getBatteryChemistryConfig(key) {
@@ -1159,7 +1217,6 @@ function calculateEarthingWireLength(numberOfFloors) {
 document.addEventListener('DOMContentLoaded', function() {
     const systemSizeSelect = document.getElementById('systemSize');
     const panelCapacitySelect = document.getElementById('panelCapacity');
-    const inverterCapacityInput = document.getElementById('inverterCapacity');
     const panelBrandSelect = document.getElementById('panelBrand');
     const panelTypeSelect = document.getElementById('panelType');
     
@@ -1172,8 +1229,10 @@ document.addEventListener('DOMContentLoaded', function() {
             updatePanelCount();
             
             // Also update inverter capacity to match system size
-            if (inverterCapacityInput && !isKitBrand(document.getElementById('panelBrand').value)) {
-                inverterCapacityInput.value = this.value;
+            if (!isKitBrand(document.getElementById('panelBrand').value)) {
+                const hidden = document.getElementById('inverterCapacity');
+                if (hidden) hidden.value = this.value;
+                fillStandardInverterOptions();
             }
             updateKitMode({ refreshSizes: false });
         });
@@ -1269,12 +1328,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const phaseTypeSelect = document.getElementById('phaseType');
     if (phaseTypeSelect) {
-        phaseTypeSelect.addEventListener('change', updateKitMode);
+        phaseTypeSelect.addEventListener('change', function() {
+            if (isKitBrand(document.getElementById('panelBrand').value)) updateKitMode();
+            else fillStandardInverterOptions();
+        });
+    }
+
+    const inverterBrandSelect = document.getElementById('inverterBrand');
+    if (inverterBrandSelect) {
+        inverterBrandSelect.addEventListener('change', fillStandardInverterOptions);
     }
 
     const inverterCapacityKit = document.getElementById('inverterCapacityKit');
     if (inverterCapacityKit) {
-        inverterCapacityKit.addEventListener('change', applySelectedKitSku);
+        inverterCapacityKit.addEventListener('change', function() {
+            if (isKitBrand(document.getElementById('panelBrand').value)) {
+                applySelectedKitSku();
+                return;
+            }
+            const hidden = document.getElementById('inverterCapacity');
+            const selected = this.selectedOptions[0];
+            if (hidden) hidden.value = (selected && selected.dataset.kw) || this.value;
+        });
     }
     
     if (panelTypeSelect) {
