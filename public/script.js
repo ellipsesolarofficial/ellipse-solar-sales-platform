@@ -428,7 +428,6 @@ function listKitsForForm() {
 
     const systemType = document.getElementById('systemType').value;
     const category = document.getElementById('panelCategory').value === 'nonDcr' ? 'nonDcr' : 'dcr';
-    const phaseKey = normalizePhase(document.getElementById('phaseType').value);
     let list = (catalog.skus || []).filter(sku => sku.systemType === systemType && sku.category === category);
 
     if (!list.length && systemType === 'hybrid') {
@@ -436,8 +435,7 @@ function listKitsForForm() {
     }
 
     list = list.filter(sku => sku.dcKw <= 50.5);
-    const samePhase = list.filter(sku => sku.phase === phaseKey);
-    return samePhase.length ? samePhase : list;
+    return list;
 }
 
 function uniqueKitCapacities(kits) {
@@ -474,12 +472,15 @@ function findMatchingKit({ brand, systemType, category, phase, systemSize, inver
     if (!list.length) return null;
 
     const phaseKey = normalizePhase(phase);
-    const samePhase = list.filter(sku => sku.phase === phaseKey);
-    if (samePhase.length) list = samePhase;
-
     const size = parseFloat(systemSize) || 0;
     const exactSize = list.filter(sku => Math.abs(sku.dcKw - size) < 0.001);
-    if (exactSize.length) list = exactSize;
+    if (exactSize.length) {
+        const samePhaseExact = exactSize.filter(sku => sku.phase === phaseKey);
+        list = samePhaseExact.length ? samePhaseExact : exactSize;
+    } else {
+        const samePhase = list.filter(sku => sku.phase === phaseKey);
+        if (samePhase.length) list = samePhase;
+    }
 
     const inv = parseFloat(inverterKw);
     if (!ignoreInverter && inv) {
@@ -702,11 +703,16 @@ function syncKitCapacityOptions() {
     sizeSelect.dataset.kitMode = '1';
 
     capacities.forEach(dc => {
-        const sample = kits.find(sku => Math.abs(sku.dcKw - dc) < 0.001);
+        const matches = kits.filter(sku => Math.abs(sku.dcKw - dc) < 0.001);
+        const sample = matches[0];
+        const phases = [...new Set(matches.map(sku => sku.phase))];
+        const phaseNote = phases.length === 1
+            ? (phases[0] === '3ph' ? ' · 3 Phase' : ' · 1 Phase')
+            : '';
         const option = document.createElement('option');
         option.value = String(dc);
         option.textContent = sample
-            ? `${dc} kW · ${sample.panels} × ${sample.panelWatt}W`
+            ? `${dc} kW · ${sample.panels} × ${sample.panelWatt}W${phaseNote}`
             : `${dc} kW`;
         sizeSelect.appendChild(option);
     });
@@ -720,7 +726,7 @@ function syncKitCapacityOptions() {
     }
 
     const hint = document.getElementById('systemSizeHint');
-    if (hint) hint.textContent = 'Only kit DC sizes available for this brand, DCR and phase';
+    if (hint) hint.textContent = 'All kit DC sizes for this brand and DCR. Phase follows the selected kit.';
 
     syncKitInverterOptions();
 }
