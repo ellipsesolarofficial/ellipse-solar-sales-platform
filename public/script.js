@@ -44,7 +44,7 @@ function initializeUI() {
     updateMixedSplitVisibility(false);
     updateInverterBrands();
     updateBatteryOptions(true);
-    updatePanelCount();
+    updateKitMode();
 }
 
 console.log('Script loaded, fetching configuration...');
@@ -396,6 +396,154 @@ function getBrandCapacityConfig(panelBrand, panelType) {
     return { capacities, defaultCapacity, techKey };
 }
 
+function isKitBrand(panelBrand) {
+    const brandConfig = rates && rates.solarPanels && rates.solarPanels[panelBrand];
+    return !!(brandConfig && brandConfig.kitBased);
+}
+
+function getKitCatalog(panelBrand) {
+    const brandConfig = (rates.solarPanels && rates.solarPanels[panelBrand]) || {};
+    const key = brandConfig.kitCatalog || panelBrand;
+    return (rates.kits && rates.kits[key]) || null;
+}
+
+function normalizePhase(phaseType) {
+    return (phaseType === '3phase' || phaseType === '3ph') ? '3ph' : '1ph';
+}
+
+function findMatchingKit({ brand, systemType, category, phase, systemSize, inverterKw, ignoreInverter }) {
+    const catalog = getKitCatalog(brand);
+    if (!catalog) return null;
+
+    const systemTypeKey = (rates.systemTypes && rates.systemTypes[systemType]) ? systemType : 'ongrid';
+    const cat = category === 'nonDcr' ? 'nonDcr' : 'dcr';
+    let list = (catalog.skus || []).filter(sku => sku.systemType === systemTypeKey && sku.category === cat);
+
+    if (!list.length && systemTypeKey === 'hybrid') {
+        list = (catalog.skus || []).filter(sku => sku.systemType === 'hybrid');
+    }
+    if (!list.length) return null;
+
+    const phaseKey = normalizePhase(phase);
+    const samePhase = list.filter(sku => sku.phase === phaseKey);
+    if (samePhase.length) list = samePhase;
+
+    const inv = parseFloat(inverterKw);
+    if (!ignoreInverter && inv) {
+        const invMatch = list.filter(sku => Math.abs(sku.inverterKw - inv) < 0.05);
+        if (invMatch.length) list = invMatch;
+    }
+
+    const size = parseFloat(systemSize) || 0;
+    list = list.slice().sort((a, b) => {
+        const da = Math.abs(a.dcKw - size);
+        const db = Math.abs(b.dcKw - size);
+        if (da !== db) return da - db;
+        return Math.abs(a.inverterKw - (inv || size)) - Math.abs(b.inverterKw - (inv || size));
+    });
+    return list[0];
+}
+
+function kitFromForm(ignoreInverter) {
+    if (!rates) return null;
+    const brand = document.getElementById('panelBrand').value;
+    if (!isKitBrand(brand)) return null;
+    return findMatchingKit({
+        brand,
+        systemType: document.getElementById('systemType').value,
+        category: document.getElementById('panelCategory').value,
+        phase: document.getElementById('phaseType').value,
+        systemSize: document.getElementById('systemSize').value,
+        inverterKw: document.getElementById('inverterCapacity').value,
+        ignoreInverter
+    });
+}
+
+function kitIncludes(kit, item) {
+    return !!(kit && Array.isArray(kit.includes) && kit.includes.indexOf(item) !== -1);
+}
+
+function kitIncludeLabel(includes) {
+    const labels = {
+        panels: 'modules',
+        inverter: 'inverter',
+        acdb: 'ACDB',
+        dcdb: 'DCDB',
+        earthing1mtr: 'earthing rods',
+        chemicalBags: 'earthing compound',
+        dcWire: 'DC wire',
+        mc4Connector: 'MC4',
+        battery: 'lithium battery'
+    };
+    return (includes || []).map(key => labels[key] || key).join(', ');
+}
+
+function updateKitMode() {
+    if (!rates) return;
+
+    const brand = document.getElementById('panelBrand').value;
+    const kitHint = document.getElementById('kitBrandHint');
+    const categorySelect = document.getElementById('panelCategory');
+    const mixedOption = categorySelect && Array.from(categorySelect.options).find(opt => opt.value === 'mixed');
+    const minusBtn = document.getElementById('panelCountMinus');
+    const plusBtn = document.getElementById('panelCountPlus');
+    const kitBased = isKitBrand(brand);
+
+    if (mixedOption) mixedOption.disabled = kitBased;
+    if (kitBased && categorySelect && categorySelect.value === 'mixed') {
+        categorySelect.value = 'dcr';
+        updateMixedSplitVisibility(false);
+    }
+
+    if (minusBtn) minusBtn.disabled = kitBased;
+    if (plusBtn) plusBtn.disabled = kitBased;
+
+    if (!kitBased) {
+        if (kitHint) kitHint.textContent = '';
+        const inverterSelect = document.getElementById('inverterBrand');
+        if (inverterSelect && (inverterSelect.value === 'kit' || inverterSelect.options.length === 1 && inverterSelect.options[0].value === 'kit')) {
+            updateInverterBrands();
+        }
+        return;
+    }
+
+    const kit = kitFromForm(true);
+    if (kitHint) {
+        kitHint.textContent = kit
+            ? `Kit brand — ${kit.panels} × ${kit.panelWatt}W (${kit.dcKw} kW). Includes ${kitIncludeLabel(kit.includes)}. Extra BOS is added on top.`
+            : 'Kit brand — no matching kit for this type / DCR / phase. Choose a listed kit size.';
+    }
+
+    if (kit) {
+        const panelTypeSelect = document.getElementById('panelType');
+        if (panelTypeSelect) panelTypeSelect.value = 'topcon_bifacial';
+
+        const capacitySelect = document.getElementById('panelCapacity');
+        if (capacitySelect) {
+            const hasWatt = Array.from(capacitySelect.options).some(opt => Number(opt.value) === kit.panelWatt);
+            if (!hasWatt) {
+                const option = document.createElement('option');
+                option.value = kit.panelWatt;
+                option.textContent = `${kit.panelWatt}W`;
+                capacitySelect.appendChild(option);
+            }
+            capacitySelect.value = String(kit.panelWatt);
+        }
+
+        const inverterCap = document.getElementById('inverterCapacity');
+        if (inverterCap) inverterCap.value = kit.inverterKw;
+
+        const phaseSelect = document.getElementById('phaseType');
+        if (phaseSelect && phaseSelect.value !== kit.phase) {
+            // Keep the salesperson's phase; matching already preferred it.
+        }
+    }
+
+    updateInverterBrands();
+    resetPanelCountAdjustment();
+    updatePanelCount();
+}
+
 // Function to update panel capacity options based on brand and panel type
 function updatePanelCapacityByType() {
     const panelType = document.getElementById('panelType').value;
@@ -431,8 +579,22 @@ function updateInverterBrands() {
     const select = document.getElementById('inverterBrand');
     const brands = rates.inverters[systemType] || {};
     const previous = select.value;
+    const panelBrand = document.getElementById('panelBrand').value;
+    const catalog = isKitBrand(panelBrand) ? getKitCatalog(panelBrand) : null;
     
     select.innerHTML = '';
+
+    if (catalog) {
+        const option = document.createElement('option');
+        option.value = 'kit';
+        option.textContent = catalog.inverterLabel || 'Kit inverter';
+        select.appendChild(option);
+        select.value = 'kit';
+        document.getElementById('inverterBrandHint').textContent =
+            'Inverter is included in the kit (Eastman / Goodwe / Solis / Sofar / Solax / Foxx)';
+        return;
+    }
+
     Object.keys(brands).forEach(key => {
         const option = document.createElement('option');
         option.value = key;
@@ -744,6 +906,24 @@ function validateMixedSplit() {
 
 // Dynamic panel count calculation with ±1 adjustment from the recommendation
 function updatePanelCount() {
+    const kit = kitFromForm(true);
+    if (kit) {
+        const systemWatts = kit.dcKw * 1000;
+        const line = panelCapacityLine(kit.panels, kit.panelWatt, systemWatts);
+        document.getElementById('panelCountValue').innerHTML = line.html;
+        const overrideInput = document.getElementById('panelCountOverride');
+        if (overrideInput) overrideInput.value = kit.panels;
+        const minusBtn = document.getElementById('panelCountMinus');
+        const plusBtn = document.getElementById('panelCountPlus');
+        if (minusBtn) minusBtn.disabled = true;
+        if (plusBtn) plusBtn.disabled = true;
+        const hint = document.getElementById('panelAlternatives');
+        if (hint) {
+            hint.innerHTML = `<span style="color: #666;">Kit panel count is fixed at ${kit.panels} × ${kit.panelWatt}W (${kit.dcKw} kW).</span>`;
+        }
+        return;
+    }
+
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 0;
     const panelCapacity = parseFloat(document.getElementById('panelCapacity').value) || 545;
     
@@ -821,9 +1001,10 @@ document.addEventListener('DOMContentLoaded', function() {
             updatePanelCount();
             
             // Also update inverter capacity to match system size
-            if (inverterCapacityInput) {
+            if (inverterCapacityInput && !isKitBrand(document.getElementById('panelBrand').value)) {
                 inverterCapacityInput.value = this.value;
             }
+            updateKitMode();
         });
     }
     
@@ -832,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', function() {
         panelCategorySelect.addEventListener('change', function() {
             resetPanelCountAdjustment();
             updateMixedSplitVisibility(this.value === 'mixed');
-            updatePanelCount();
+            updateKitMode();
         });
     }
     
@@ -852,6 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
         systemTypeSelect.addEventListener('change', function() {
             updateInverterBrands();
             updateBatteryInverterOptions(false);
+            updateKitMode();
         });
     }
     
@@ -908,7 +1090,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (panelBrandSelect) {
-        panelBrandSelect.addEventListener('change', updatePanelCapacityOptions);
+        panelBrandSelect.addEventListener('change', function() {
+            updatePanelCapacityOptions();
+            updateKitMode();
+        });
+    }
+
+    const phaseTypeSelect = document.getElementById('phaseType');
+    if (phaseTypeSelect) {
+        phaseTypeSelect.addEventListener('change', updateKitMode);
     }
     
     if (panelTypeSelect) {
@@ -950,6 +1140,10 @@ function getBrandProfit(brandConfig, systemSize) {
     const key = String(Math.round(systemSize));
     if (table && table[key] != null) {
         return Number(table[key]) || 0;
+    }
+    if (brandConfig && brandConfig.kitBased && rates.solarPanels.tata) {
+        const tataTable = rates.solarPanels.tata.profitByCapacity || {};
+        if (tataTable[key] != null) return Number(tataTable[key]) || 0;
     }
     return 0;
 }
@@ -1090,6 +1284,25 @@ function calculateQuotation(params) {
     // Get panel brand config
     const brandConfig = rates.solarPanels[panelBrand] || rates.solarPanels['ina'];
     const rateFor = key => brandConfig[techKey]?.[key]?.pricePerWatt || 24;
+
+    const kitCatalog = brandConfig.kitBased ? getKitCatalog(panelBrand) : null;
+    const kit = brandConfig.kitBased
+        ? findMatchingKit({
+            brand: panelBrand,
+            systemType: systemTypeKey,
+            category: panelCategory === 'nonDcr' ? 'nonDcr' : (panelCategory === 'mixed' ? null : panelCategory),
+            phase: phaseType,
+            systemSize: numSystemSize,
+            inverterKw: numInverterCapacity
+        })
+        : null;
+
+    if (brandConfig.kitBased && panelCategory === 'mixed') {
+        throw new Error(`${brandConfig.name} is a kit brand and cannot use a Mixed DCR split. Choose DCR or Non-DCR.`);
+    }
+    if (brandConfig.kitBased && !kit) {
+        throw new Error(`No ${brandConfig.name} kit for ${numSystemSize} kW ${normalizePhase(phaseType)} ${systemTypeConfig.name}.`);
+    }
     
     // Split the requested capacity into DCR / Non-DCR parts (one part unless mixed)
     const isMixed = panelCategory === 'mixed';
@@ -1147,8 +1360,25 @@ function calculateQuotation(params) {
         ? panelSegments.map(s => `${s.requestedKW}kW ${s.label}`).join(' + ')
         : panelSegments[0].label;
     
-    const panelCount = panelSegments.reduce((sum, s) => sum + s.panels, 0);
-    const totalPanelWatts = panelSegments.reduce((sum, s) => sum + s.capacityW, 0);
+    let panelCount = panelSegments.reduce((sum, s) => sum + s.panels, 0);
+    let totalPanelWatts = panelSegments.reduce((sum, s) => sum + s.capacityW, 0);
+
+    if (kit) {
+        const kitWatt = kit.panelWatt;
+        const kitPanels = kit.panels;
+        const kitWatts = kitPanels * kitWatt;
+        panelSegments.splice(0, panelSegments.length, {
+            key: kit.category,
+            label: kit.category === 'nonDcr' ? 'Non-DCR' : 'DCR',
+            requestedKW: numSystemSize,
+            panels: kitPanels,
+            capacityW: kitWatts,
+            pricePerWatt: 0,
+            cost: 0
+        });
+        panelCount = kitPanels;
+        totalPanelWatts = kitWatts;
+    }
     
     // Blended rate, for display when the split mixes two prices
     const blendedPricePerWatt = totalPanelWatts > 0
@@ -1158,26 +1388,32 @@ function calculateQuotation(params) {
     // Build panel config
     const adjustedPanelConfig = {
         name: `${brandConfig.name} (Bifacial, ${categoryLabel})`,
-        pricePerWatt: Math.round(blendedPricePerWatt * 100) / 100,
-        wattage: numPanelCapacity,
+        pricePerWatt: kit ? 0 : Math.round(blendedPricePerWatt * 100) / 100,
+        wattage: kit ? kit.panelWatt : numPanelCapacity,
         warranty: brandConfig.warranty || 25
     };
     
     // Get inverter config for this system type
     const inverterSet = rates.inverters[systemTypeKey] || rates.inverters.ongrid;
-    const inverterConfig = inverterSet[inverterBrand] || Object.values(inverterSet)[0];
+    const inverterConfig = kit
+        ? {
+            name: kit.inverterLabel || (kitCatalog && kitCatalog.inverterLabel) || 'Kit inverter',
+            warranty: (kitCatalog && kitCatalog.inverterWarranty) || 10
+        }
+        : (inverterSet[inverterBrand] || Object.values(inverterSet)[0]);
     
     // Get structure brand config
     const structureConfig = rates.structureBrands[structureBrand] || rates.structureBrands.tata;
     
     // Calculate actual system capacity based on panel count
-    const actualSystemCapacity = totalPanelWatts / 1000;
+    const actualSystemCapacity = kit ? kit.dcKw : (totalPanelWatts / 1000);
     
     // 1. PANELS - Calculate base cost (no per-item GST)
-    const panelBaseCost = panelSegments.reduce((sum, s) => sum + s.cost, 0);
+    const panelBaseCost = kit ? 0 : panelSegments.reduce((sum, s) => sum + s.cost, 0);
     
     // 2. INVERTER - Calculate base cost (no per-item GST)
-    const inverterBaseCost = getInverterPrice(inverterConfig, numInverterCapacity, phaseType);
+    const inverterBaseCost = kit ? 0 : getInverterPrice(inverterConfig, numInverterCapacity, phaseType);
+    const kitBaseCost = kit ? Number(kit.basicPrice) || 0 : 0;
     
     // 2b. BATTERY BANK - added when the salesperson says backup is required
     const numBatteryQuantity = parseInt(batteryQuantity) || 0;
@@ -1237,6 +1473,28 @@ function calculateQuotation(params) {
             };
         }
     }
+
+    if (kit && kitIncludes(kit, 'battery')) {
+        batteryBaseCost = 0;
+        batteryInverterCost = 0;
+        batteryInverterDetails = null;
+        batteryDetails = {
+            brand: kit.batteryBrand || 'Mysine',
+            chemistry: 'Lithium-Ion (LiFePO4)',
+            chemistryKey: 'lithium_ion',
+            model: null,
+            label: `${kit.batteryKwh} kWh`,
+            ah: null,
+            voltage: null,
+            unitPrice: 0,
+            quantity: 1,
+            kwhPerUnit: kit.batteryKwh,
+            kwhTotal: kit.batteryKwh,
+            warranty: 10,
+            total: 0,
+            includedInKit: true
+        };
+    }
     
     // 3. Calculate all component costs (no per-item GST)
     const componentCosts = {};
@@ -1244,6 +1502,20 @@ function calculateQuotation(params) {
     
     Object.keys(rates.components).forEach(key => {
         const comp = { ...rates.components[key] }; // Clone to avoid modifying original
+
+        if (kit && ['earthing1mtr', 'chemicalBags', 'dcWire', 'mc4Connector'].indexOf(key) !== -1 && kitIncludes(kit, key)) {
+            const label = typeof comp.displayName === 'string' ? comp.displayName : (comp.description || key);
+            componentCosts[key] = {
+                name: `${label} (included in kit)`,
+                brand: comp.brand,
+                rate: 0,
+                quantity: 0,
+                baseCost: 0,
+                total: 0,
+                includedInKit: true
+            };
+            return;
+        }
         
         // Structure is priced by system capacity (kW)
         if (key === 'structure') {
@@ -1263,24 +1535,34 @@ function calculateQuotation(params) {
         
         // ACDB + DCDB: Polycab list covers 1ph 1–6 kW and 3ph 5–10 kW only
         if (key === 'acdb-dcdb-combo') {
-            let comboPrice = 2000; // default 1ph
-            const phase = (phaseType === '3phase' || phaseType === '3ph') ? '3ph' : '1ph';
-            if (phase === '1ph') {
-                comboPrice = comp.pricing['1ph_1_6'];
-            } else if (numSystemSize <= 10) {
-                comboPrice = comp.pricing['3ph_5_10'];
-            } else {
-                comboPrice = comp.pricing['3ph_10_20'];
+            const phase = normalizePhase(phaseType);
+            const sizeForDb = kit ? kit.dcKw : numSystemSize;
+            const pricingKey = phase === '1ph' ? '1ph_1_6' : (sizeForDb <= 10 ? '3ph_5_10' : '3ph_10_20');
+            const parts = (comp.breakdown && comp.breakdown[pricingKey]) || {};
+            const comboPrice = comp.pricing[pricingKey];
+            const includeAcdb = kitIncludes(kit, 'acdb');
+            const includeDcdb = kitIncludes(kit, 'dcdb');
+            let charge = comboPrice;
+            let name = comp.description || 'ACDB + DCDB Combo';
+            if (includeAcdb && includeDcdb) {
+                charge = 0;
+                name += ' (included in kit)';
+            } else if (includeAcdb) {
+                charge = parts.dcdb || 0;
+                name = 'DCDB (ACDB included in kit)';
+            } else if (includeDcdb) {
+                charge = parts.acdb || 0;
+                name = 'ACDB (DCDB included in kit)';
             }
             componentCosts[key] = {
-                name: comp.description || 'ACDB + DCDB Combo',
+                name,
                 brand: comp.brand,
-                rate: comboPrice,
+                rate: charge,
                 quantity: 1,
-                baseCost: Math.round(comboPrice),
-                total: Math.round(comboPrice)
+                baseCost: Math.round(charge),
+                total: Math.round(charge)
             };
-            totalComponentsCost += comboPrice;
+            totalComponentsCost += charge;
             return;
         }
         
@@ -1409,10 +1691,10 @@ function calculateQuotation(params) {
     const totalAdditionalCharges = Object.values(additionalCharges).reduce((sum, val) => sum + val, 0);
     
     // 5. Profit for this brand at this system size
-    const profitAmount = getBrandProfit(brandConfig, numSystemSize);
+    const profitAmount = getBrandProfit(brandConfig, kit ? kit.dcKw : numSystemSize);
     
     // 6. Calculate totals - GST applied on overall price (material + profit + additional + commission - discount)
-    const totalMaterialCost = panelBaseCost + inverterBaseCost + batteryBaseCost + batteryInverterCost + totalComponentsCost;
+    const totalMaterialCost = kitBaseCost + panelBaseCost + inverterBaseCost + batteryBaseCost + batteryInverterCost + totalComponentsCost;
     
     // 7. Apply commission and discount
     const commissionAmount = numCommission;
@@ -1442,8 +1724,21 @@ function calculateQuotation(params) {
         panelCategory,
         panelCategoryLabel: categoryLabel,
         panelSegments,
-        inverterCapacity: numInverterCapacity,
-        inverterBrand,
+        inverterCapacity: kit ? kit.inverterKw : numInverterCapacity,
+        inverterBrand: kit ? 'kit' : inverterBrand,
+        kitDetails: kit ? {
+            brand: brandConfig.name,
+            catalog: kitCatalog && kitCatalog.name,
+            dcKw: kit.dcKw,
+            panels: kit.panels,
+            panelWatt: kit.panelWatt,
+            inverterKw: kit.inverterKw,
+            inverterLabel: kit.inverterLabel || (kitCatalog && kitCatalog.inverterLabel),
+            phase: kit.phase,
+            basicPrice: kit.basicPrice,
+            includes: kit.includes,
+            batteryKwh: kit.batteryKwh || null
+        } : null,
         systemType: systemTypeKey,
         systemTypeName: systemTypeConfig.name,
         systemTypeDocumentLabel: systemTypeConfig.documentLabel,
@@ -1459,6 +1754,7 @@ function calculateQuotation(params) {
         breakdown: {
             // Panel costs
             panelBaseCost: Math.round(panelBaseCost),
+            kitBaseCost: Math.round(kitBaseCost),
             
             // Inverter costs
             inverterBaseCost: Math.round(inverterBaseCost),
@@ -1545,19 +1841,29 @@ function displayQuotation(data) {
         ? q.panelSegments.map(s => `${s.panels} ${s.label}`).join(' + ') + ` = ${q.panelCount} Panels`
         : `${q.panelCount} Panels`;
     
+    const markKit = (label, includeKey) => {
+        if (q.kitDetails && kitIncludes(q.kitDetails, includeKey)) return `${label} (included in kit)`;
+        return label;
+    };
+
     const materialRows = [
-        ['Solar Panels', `${q.panelConfig.name} - ${panelSummary}`],
-        ['Inverter', `${q.inverterConfig.name} ${q.inverterCapacity}kW WiFi Enabled`],
+        ...(q.kitDetails ? [['System Kit', `${q.kitDetails.brand} ${q.kitDetails.dcKw} kW kit — includes ${kitIncludeLabel(q.kitDetails.includes)}`]] : []),
+        ['Solar Panels', markKit(`${q.panelConfig.name} - ${panelSummary}`, 'panels')],
+        ['Inverter', markKit(`${q.inverterConfig.name} ${q.inverterCapacity}kW WiFi Enabled`, 'inverter')],
         ...(q.batteryInverterDetails ? [['Inverter for Batteries', `${q.batteryInverterDetails.brand} ${q.batteryInverterDetails.label}`]] : []),
-        ...(q.batteryDetails ? [['Battery Bank', `${q.batteryDetails.brand} ${q.batteryDetails.chemistry}${q.batteryDetails.model ? ' · ' + q.batteryDetails.model : ''} ${q.batteryDetails.label} (${q.batteryDetails.kwhPerUnit} kWh) × ${q.batteryDetails.quantity}`
-            + (q.batteryDetails.quantity > 1 ? ` = ${q.batteryDetails.kwhTotal} kWh` : '')]] : []),
+        ...(q.batteryDetails ? [['Battery Bank', markKit(`${q.batteryDetails.brand} ${q.batteryDetails.chemistry}${q.batteryDetails.model ? ' · ' + q.batteryDetails.model : ''} ${q.batteryDetails.label} (${q.batteryDetails.kwhPerUnit} kWh) × ${q.batteryDetails.quantity}`
+            + (q.batteryDetails.quantity > 1 ? ` = ${q.batteryDetails.kwhTotal} kWh` : ''), 'battery')]] : []),
         ['Structure', `${getDisplayName(rc.structure, 'Structure')} - ${q.structureBrand}`],
-        ['ACDB + DCDB', getDisplayName(rc['acdb-dcdb-combo'], 'Polycab')],
-        ['Earthing', getDisplayName(rc.earthing1mtr, 'Chemical Earthing')],
+        ['ACDB + DCDB', kitIncludes(q.kitDetails, 'acdb') && kitIncludes(q.kitDetails, 'dcdb')
+            ? `${getDisplayName(rc['acdb-dcdb-combo'], 'Polycab')} (included in kit)`
+            : kitIncludes(q.kitDetails, 'acdb')
+                ? 'DCDB extra (ACDB included in kit)'
+                : getDisplayName(rc['acdb-dcdb-combo'], 'Polycab')],
+        ['Earthing', markKit(getDisplayName(rc.earthing1mtr, 'Chemical Earthing'), 'earthing1mtr')],
         ['Earthing Wire', getDisplayName(rc.earthingWire, 'Earthing Wire')],
-        ['DC Wire', getDisplayName(rc.dcWire, 'DC Wire')],
+        ['DC Wire', markKit(getDisplayName(rc.dcWire, 'DC Wire'), 'dcWire')],
         ['AC Cable', getDisplayName(rc.acWire, 'AC Cable')],
-        ['MC4 Connectors', `${getDisplayName(rc.mc4Connector, 'MC4 Connectors')} - ${q.panelCount + 4} Pairs`],
+        ['MC4 Connectors', markKit(`${getDisplayName(rc.mc4Connector, 'MC4 Connectors')} - ${q.panelCount + 4} Pairs`, 'mc4Connector')],
         ['Drain Clip', `${getDisplayName(rc.drainClip, 'Universal Drain Clip (30 MM)')} - ${q.panelCount * ((rc.drainClip && rc.drainClip.quantityPerPanel) || 2)} Pcs`],
         ['Lightning Arrester', getDisplayName(rc.lightningArrester, 'Lightning Arrester')],
         ['Solar Meter', getDisplayName(rc.solarMeter, 'L&T / Lauritz Knudsen')]
@@ -1579,6 +1885,15 @@ function displayQuotation(data) {
     
     if (showInternal) {
         // INTERNAL VIEW - full component breakdown
+        if (q.kitDetails) {
+            breakdownHTML += `
+            <tr>
+                <td><strong>System Kit</strong> (${q.kitDetails.brand} ${q.kitDetails.dcKw} kW / ${q.kitDetails.panels} × ${q.kitDetails.panelWatt}W / ${q.kitDetails.inverterKw}kW inverter)</td>
+                <td>${formatCurrency(q.breakdown.kitBaseCost)}</td>
+            </tr>
+            `;
+        }
+
         breakdownHTML += q.panelSegments.map(s => `
             <tr>
                 <td><strong>Solar Panels${q.panelSegments.length > 1 ? ' - ' + s.label : ''}</strong> (${s.panels} × ${q.panelConfig.wattage}W = ${s.capacityW}W × ₹${s.pricePerWatt}/W)</td>
@@ -1829,6 +2144,7 @@ function generatePDF(quotation) {
     // BOM rows - modules always collapse into a single row; DCR/Non-DCR split is internal only
     const panelCapacityLabel = q.systemSize + ' kW';
     const bomItems = [
+        ...(q.kitDetails ? [['System Kit', q.kitDetails.brand, q.kitDetails.dcKw + ' kW kit', '1']] : []),
         ['Solar Module', brandName + ' (Bifacial)', panelCapacityLabel, String(q.panelCount)],
         ['PCU/Inverter', q.inverterConfig.name, q.inverterCapacity + 'kW (' + phaseText + ')', '1'],
         ...(q.batteryInverterDetails ? [['Battery Inverter', q.batteryInverterDetails.brand, q.batteryInverterDetails.label, '1']] : []),

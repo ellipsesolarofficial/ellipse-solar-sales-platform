@@ -282,13 +282,14 @@
           570,
           575,
           580,
+          585,
           590,
           600,
           610,
           615,
           620
         ],
-        "defaultCapacity": 610
+        "defaultCapacity": 590
       },
       "warranty": 25,
       "profitByCapacity": {
@@ -340,7 +341,179 @@
         "48": 288000,
         "49": 293000,
         "50": 298000
-      }
+      },
+      "kitBased": true,
+      "kitCatalog": "tata"
+    },
+    "eastman": {
+      "name": "Eastman",
+      "kitBased": true,
+      "kitCatalog": "tata",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 29.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 27.0
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 30.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 14.5
+        },
+        "capacities": [
+          585,
+          590,
+          600
+        ],
+        "defaultCapacity": 590
+      },
+      "warranty": 25
+    },
+    "luminous": {
+      "name": "Luminous",
+      "kitBased": true,
+      "kitCatalog": "tata",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 29.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 27.0
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 30.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 14.5
+        },
+        "capacities": [
+          585,
+          590,
+          600
+        ],
+        "defaultCapacity": 590
+      },
+      "warranty": 25
+    },
+    "panasonic": {
+      "name": "Panasonic",
+      "kitBased": true,
+      "kitCatalog": "tata",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 29.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 27.0
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 30.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 14.5
+        },
+        "capacities": [
+          585,
+          590,
+          600
+        ],
+        "defaultCapacity": 590
+      },
+      "warranty": 25
+    },
+    "havells": {
+      "name": "Havells",
+      "kitBased": true,
+      "kitCatalog": "tata",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 29.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 27.0
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 30.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 14.5
+        },
+        "capacities": [
+          585,
+          590,
+          600
+        ],
+        "defaultCapacity": 590
+      },
+      "warranty": 25
+    },
+    "reliance": {
+      "name": "Reliance",
+      "kitBased": true,
+      "kitCatalog": "tata",
+      "monoperc": {
+        "dcr": {
+          "pricePerWatt": 29.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 27.0
+        },
+        "capacities": [
+          540,
+          545,
+          550
+        ],
+        "defaultCapacity": 545
+      },
+      "topcon": {
+        "dcr": {
+          "pricePerWatt": 30.5
+        },
+        "nonDcr": {
+          "pricePerWatt": 14.5
+        },
+        "capacities": [
+          585,
+          590,
+          600
+        ],
+        "defaultCapacity": 590
+      },
+      "warranty": 25
     },
     "renewsys": {
       "name": "Renewsys",
@@ -1161,7 +1334,7 @@
     },
     "lithium_ion": {
       "name": "Lithium-Ion (LiFePO4)",
-      "description": "Lithium iron phosphate batteries — longer life and higher capacity"
+      "description": "Lithium iron phosphate batteries \u2014 longer life and higher capacity"
     }
   },
   "batteries": {
@@ -1766,5 +1939,666 @@
       "3+": 78000
     },
     "state": 17000
+  },
+  "kits": {
+    "tata": {
+      "name": "Tata Power Solar Kit",
+      "inverterLabel": "Eastman / Goodwe / Solis / Sofar / Solax / Foxx",
+      "inverterWarranty": 10,
+      "skus": [
+        {
+          "id": "dcr_og_2_95_3_1ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 2.95,
+          "panels": 5,
+          "inverterKw": 3,
+          "phase": "1ph",
+          "basicPrice": 108905,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_3_54_3_1ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 3.54,
+          "panels": 6,
+          "inverterKw": 3,
+          "phase": "1ph",
+          "basicPrice": 125714,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_3_54_3_3_1ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 3.54,
+          "panels": 6,
+          "inverterKw": 3.3,
+          "phase": "1ph",
+          "basicPrice": 127619,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_3_54_5_1ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 3.54,
+          "panels": 6,
+          "inverterKw": 5,
+          "phase": "1ph",
+          "basicPrice": 136000,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_5_31_5_1ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 5.31,
+          "panels": 9,
+          "inverterKw": 5,
+          "phase": "1ph",
+          "basicPrice": 186190,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_5_31_5_3ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 5.31,
+          "panels": 9,
+          "inverterKw": 5,
+          "phase": "3ph",
+          "basicPrice": 206905,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_5_9_6_1ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 5.9,
+          "panels": 10,
+          "inverterKw": 6,
+          "phase": "1ph",
+          "basicPrice": 207857,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_6_49_6_3ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 6.49,
+          "panels": 11,
+          "inverterKw": 6,
+          "phase": "3ph",
+          "basicPrice": 244762,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_8_26_8_3ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 8.26,
+          "panels": 14,
+          "inverterKw": 8,
+          "phase": "3ph",
+          "basicPrice": 295429,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_og_10_03_10_3ph",
+          "systemType": "ongrid",
+          "category": "dcr",
+          "panelWatt": 590,
+          "dcKw": 10.03,
+          "panels": 17,
+          "inverterKw": 10,
+          "phase": "3ph",
+          "basicPrice": 346381,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags"
+          ]
+        },
+        {
+          "id": "dcr_hy_3_554_5_1ph_5kwh",
+          "systemType": "hybrid",
+          "category": "dcr",
+          "panelWatt": 585,
+          "dcKw": 3.554,
+          "panels": 6,
+          "inverterKw": 5,
+          "phase": "1ph",
+          "batteryKwh": 5,
+          "batteryBrand": "Mysine",
+          "basicPrice": 296190,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags",
+            "battery"
+          ]
+        },
+        {
+          "id": "dcr_hy_5_331_5_1ph_5kwh",
+          "systemType": "hybrid",
+          "category": "dcr",
+          "panelWatt": 585,
+          "dcKw": 5.331,
+          "panels": 9,
+          "inverterKw": 5,
+          "phase": "1ph",
+          "batteryKwh": 5,
+          "batteryBrand": "Mysine",
+          "basicPrice": 345238,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags",
+            "battery"
+          ]
+        },
+        {
+          "id": "dcr_hy_5_331_5_1ph_10kwh",
+          "systemType": "hybrid",
+          "category": "dcr",
+          "panelWatt": 585,
+          "dcKw": 5.331,
+          "panels": 9,
+          "inverterKw": 5,
+          "phase": "1ph",
+          "batteryKwh": 10,
+          "batteryBrand": "Mysine",
+          "basicPrice": 498571,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags",
+            "battery"
+          ]
+        },
+        {
+          "id": "dcr_hy_9_444_10_3ph_15kwh",
+          "systemType": "hybrid",
+          "category": "dcr",
+          "panelWatt": 585,
+          "dcKw": 9.444,
+          "panels": 16,
+          "inverterKw": 10,
+          "phase": "3ph",
+          "batteryKwh": 15,
+          "batteryBrand": "Mysine",
+          "basicPrice": 830000,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags",
+            "battery"
+          ]
+        },
+        {
+          "id": "dcr_hy_10_03_10_3ph_15kwh",
+          "systemType": "hybrid",
+          "category": "dcr",
+          "panelWatt": 585,
+          "dcKw": 10.03,
+          "panels": 17,
+          "inverterKw": 10,
+          "phase": "3ph",
+          "batteryKwh": 15,
+          "batteryBrand": "Mysine",
+          "basicPrice": 860952,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags",
+            "battery"
+          ]
+        },
+        {
+          "id": "dcr_hy_15_334_15_3ph_15kwh",
+          "systemType": "hybrid",
+          "category": "dcr",
+          "panelWatt": 585,
+          "dcKw": 15.334,
+          "panels": 26,
+          "inverterKw": 15,
+          "phase": "3ph",
+          "batteryKwh": 15,
+          "batteryBrand": "Mysine",
+          "basicPrice": 1111905,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags",
+            "battery"
+          ]
+        },
+        {
+          "id": "dcr_hy_20_066_20_3ph_20kwh",
+          "systemType": "hybrid",
+          "category": "dcr",
+          "panelWatt": 585,
+          "dcKw": 20.066,
+          "panels": 34,
+          "inverterKw": 20,
+          "phase": "3ph",
+          "batteryKwh": 20,
+          "batteryBrand": "Mysine",
+          "basicPrice": 1438095,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcdb",
+            "earthing1mtr",
+            "chemicalBags",
+            "battery"
+          ]
+        },
+        {
+          "id": "ndcr_og_6_1_6_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 6.1,
+          "panels": 10,
+          "inverterKw": 6,
+          "phase": "3ph",
+          "basicPrice": 189048,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_8_54_8_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 8.54,
+          "panels": 14,
+          "inverterKw": 8,
+          "phase": "3ph",
+          "basicPrice": 238571,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_10_37_10_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 10.37,
+          "panels": 17,
+          "inverterKw": 10,
+          "phase": "3ph",
+          "basicPrice": 278095,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_12_0_10_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 12.0,
+          "panels": 20,
+          "inverterKw": 10,
+          "phase": "3ph",
+          "basicPrice": 290476,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_15_0_15_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 15.0,
+          "panels": 25,
+          "inverterKw": 15,
+          "phase": "3ph",
+          "basicPrice": 370000,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_20_4_20_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 20.4,
+          "panels": 34,
+          "inverterKw": 20,
+          "phase": "3ph",
+          "basicPrice": 485476,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_25_2_25_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 25.2,
+          "panels": 42,
+          "inverterKw": 25,
+          "phase": "3ph",
+          "basicPrice": 606667,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_30_0_30_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 30.0,
+          "panels": 50,
+          "inverterKw": 30,
+          "phase": "3ph",
+          "basicPrice": 696476,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_40_2_40_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 40.2,
+          "panels": 67,
+          "inverterKw": 40,
+          "phase": "3ph",
+          "basicPrice": 917143,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_45_0_40_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 45.0,
+          "panels": 75,
+          "inverterKw": 40,
+          "phase": "3ph",
+          "basicPrice": 1011905,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_50_4_50_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 50.4,
+          "panels": 84,
+          "inverterKw": 50,
+          "phase": "3ph",
+          "basicPrice": 1138095,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_60_0_60_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 60.0,
+          "panels": 100,
+          "inverterKw": 60,
+          "phase": "3ph",
+          "basicPrice": 1335238,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_80_0_80_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 80.0,
+          "panels": 134,
+          "inverterKw": 80,
+          "phase": "3ph",
+          "basicPrice": 1812381,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_100_2_100_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 100.2,
+          "panels": 167,
+          "inverterKw": 100,
+          "phase": "3ph",
+          "basicPrice": 2234286,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_120_0_100_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 120.0,
+          "panels": 200,
+          "inverterKw": 100,
+          "phase": "3ph",
+          "basicPrice": 2619048,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ]
+        },
+        {
+          "id": "ndcr_og_150_0_130_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 150.0,
+          "panels": 250,
+          "inverterKw": 130,
+          "phase": "3ph",
+          "basicPrice": 3446190,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ],
+          "inverterLabel": "80+50 kW"
+        },
+        {
+          "id": "ndcr_og_200_4_200_3ph",
+          "systemType": "ongrid",
+          "category": "nonDcr",
+          "panelWatt": 600,
+          "dcKw": 200.4,
+          "panels": 334,
+          "inverterKw": 200,
+          "phase": "3ph",
+          "basicPrice": 4594286,
+          "includes": [
+            "panels",
+            "inverter",
+            "acdb",
+            "dcWire",
+            "mc4Connector"
+          ],
+          "inverterLabel": "100+100 kW"
+        }
+      ]
+    }
   }
 }
