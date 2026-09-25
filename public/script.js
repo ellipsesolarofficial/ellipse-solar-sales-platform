@@ -412,7 +412,54 @@ function normalizePhase(phaseType) {
     return (phaseType === '3phase' || phaseType === '3ph') ? '3ph' : '1ph';
 }
 
-function findMatchingKit({ brand, systemType, category, phase, systemSize, inverterKw, ignoreInverter }) {
+const STANDARD_SYSTEM_SIZES = Array.from({ length: 48 }, (_, i) => i + 3);
+
+function findKitById(brand, kitId) {
+    if (!kitId) return null;
+    const catalog = getKitCatalog(brand);
+    return ((catalog && catalog.skus) || []).find(sku => sku.id === kitId) || null;
+}
+
+function listKitsForForm() {
+    const brand = document.getElementById('panelBrand').value;
+    const catalog = getKitCatalog(brand);
+    if (!catalog) return [];
+
+    const systemType = document.getElementById('systemType').value;
+    const category = document.getElementById('panelCategory').value === 'nonDcr' ? 'nonDcr' : 'dcr';
+    const phaseKey = normalizePhase(document.getElementById('phaseType').value);
+    let list = (catalog.skus || []).filter(sku => sku.systemType === systemType && sku.category === category);
+
+    if (!list.length && systemType === 'hybrid') {
+        list = (catalog.skus || []).filter(sku => sku.systemType === 'hybrid');
+    }
+
+    list = list.filter(sku => sku.dcKw <= 50.5);
+    const samePhase = list.filter(sku => sku.phase === phaseKey);
+    return samePhase.length ? samePhase : list;
+}
+
+function uniqueKitCapacities(kits) {
+    const seen = [];
+    (kits || []).forEach(sku => {
+        if (!seen.some(dc => Math.abs(dc - sku.dcKw) < 0.001)) seen.push(sku.dcKw);
+    });
+    return seen.sort((a, b) => a - b);
+}
+
+function kitInverterLabel(sku) {
+    let label = `${sku.inverterKw} kW ${sku.phase === '3ph' ? '3 Phase' : '1 Phase'}`;
+    if (sku.inverterLabel) label = `${sku.inverterLabel} · ${label}`;
+    if (sku.batteryKwh) label += ` · ${sku.batteryKwh} kWh battery`;
+    return label;
+}
+
+function findMatchingKit({ brand, systemType, category, phase, systemSize, inverterKw, ignoreInverter, kitId }) {
+    if (kitId) {
+        const byId = findKitById(brand, kitId);
+        if (byId) return byId;
+    }
+
     const catalog = getKitCatalog(brand);
     if (!catalog) return null;
 
@@ -429,13 +476,16 @@ function findMatchingKit({ brand, systemType, category, phase, systemSize, inver
     const samePhase = list.filter(sku => sku.phase === phaseKey);
     if (samePhase.length) list = samePhase;
 
+    const size = parseFloat(systemSize) || 0;
+    const exactSize = list.filter(sku => Math.abs(sku.dcKw - size) < 0.001);
+    if (exactSize.length) list = exactSize;
+
     const inv = parseFloat(inverterKw);
     if (!ignoreInverter && inv) {
         const invMatch = list.filter(sku => Math.abs(sku.inverterKw - inv) < 0.05);
         if (invMatch.length) list = invMatch;
     }
 
-    const size = parseFloat(systemSize) || 0;
     list = list.slice().sort((a, b) => {
         const da = Math.abs(a.dcKw - size);
         const db = Math.abs(b.dcKw - size);
@@ -449,6 +499,7 @@ function kitFromForm(ignoreInverter) {
     if (!rates) return null;
     const brand = document.getElementById('panelBrand').value;
     if (!isKitBrand(brand)) return null;
+    const kitSku = document.getElementById('kitSku');
     return findMatchingKit({
         brand,
         systemType: document.getElementById('systemType').value,
@@ -456,6 +507,7 @@ function kitFromForm(ignoreInverter) {
         phase: document.getElementById('phaseType').value,
         systemSize: document.getElementById('systemSize').value,
         inverterKw: document.getElementById('inverterCapacity').value,
+        kitId: kitSku && kitSku.value,
         ignoreInverter
     });
 }
@@ -480,9 +532,147 @@ function kitIncludeLabel(includes) {
     return (includes || []).map(key => labels[key] || key).join(', ');
 }
 
-function updateKitMode() {
+function setInverterFieldMode(kitBased) {
+    const input = document.getElementById('inverterCapacity');
+    const select = document.getElementById('inverterCapacityKit');
+    const hint = document.getElementById('inverterCapacityHint');
+    if (!input || !select) return;
+
+    if (kitBased) {
+        input.style.display = 'none';
+        input.removeAttribute('required');
+        select.style.display = '';
+        select.required = true;
+        if (hint) hint.textContent = 'Only the inverter sizes sold with this kit capacity';
+    } else {
+        select.style.display = 'none';
+        select.removeAttribute('required');
+        select.innerHTML = '';
+        input.style.display = '';
+        input.required = true;
+        if (hint) hint.textContent = 'Usually same as system capacity or slightly higher';
+    }
+}
+
+function fillStandardSystemSizes(preferred) {
+    const select = document.getElementById('systemSize');
+    if (!select) return;
+    const keep = parseFloat(preferred || select.value) || 3;
+    select.innerHTML = '';
+    STANDARD_SYSTEM_SIZES.forEach(kw => {
+        const option = document.createElement('option');
+        option.value = String(kw);
+        option.textContent = `${kw} kW`;
+        select.appendChild(option);
+    });
+    select.value = STANDARD_SYSTEM_SIZES.indexOf(Math.round(keep)) !== -1 ? String(Math.round(keep)) : '3';
+    delete select.dataset.kitMode;
+    const hint = document.getElementById('systemSizeHint');
+    if (hint) hint.textContent = 'Select system capacity from 3kW to 50kW';
+}
+
+function applySelectedKitSku() {
+    const brand = document.getElementById('panelBrand').value;
+    const invSelect = document.getElementById('inverterCapacityKit');
+    const kit = findKitById(brand, invSelect && invSelect.value) || kitFromForm(false);
+    const kitSkuInput = document.getElementById('kitSku');
+    if (kitSkuInput) kitSkuInput.value = kit ? kit.id : '';
+    if (!kit) return;
+
+    const inverterCap = document.getElementById('inverterCapacity');
+    if (inverterCap) inverterCap.value = kit.inverterKw;
+
+    const phaseSelect = document.getElementById('phaseType');
+    if (phaseSelect && phaseSelect.value !== kit.phase) {
+        phaseSelect.value = kit.phase;
+    }
+
+    const panelTypeSelect = document.getElementById('panelType');
+    if (panelTypeSelect) panelTypeSelect.value = 'topcon_bifacial';
+
+    const capacitySelect = document.getElementById('panelCapacity');
+    if (capacitySelect) {
+        const hasWatt = Array.from(capacitySelect.options).some(opt => Number(opt.value) === kit.panelWatt);
+        if (!hasWatt) {
+            const option = document.createElement('option');
+            option.value = kit.panelWatt;
+            option.textContent = `${kit.panelWatt}W`;
+            capacitySelect.appendChild(option);
+        }
+        capacitySelect.value = String(kit.panelWatt);
+    }
+
+    const kitHint = document.getElementById('kitBrandHint');
+    if (kitHint) {
+        kitHint.textContent = `Kit — ${kit.panels} × ${kit.panelWatt}W (${kit.dcKw} kW) + ${kitInverterLabel(kit)}. Includes ${kitIncludeLabel(kit.includes)}. Extra BOS is added on top.`;
+    }
+
+    updateInverterBrands();
+    resetPanelCountAdjustment();
+    updatePanelCount();
+}
+
+function syncKitInverterOptions() {
+    const invSelect = document.getElementById('inverterCapacityKit');
+    if (!invSelect) return;
+
+    const kits = listKitsForForm();
+    const dc = parseFloat(document.getElementById('systemSize').value);
+    const forSize = kits.filter(sku => Math.abs(sku.dcKw - dc) < 0.001);
+    const previous = invSelect.value;
+
+    invSelect.innerHTML = '';
+    forSize.forEach(sku => {
+        const option = document.createElement('option');
+        option.value = sku.id;
+        option.textContent = kitInverterLabel(sku);
+        invSelect.appendChild(option);
+    });
+
+    if (Array.from(invSelect.options).some(opt => opt.value === previous)) {
+        invSelect.value = previous;
+    }
+    applySelectedKitSku();
+}
+
+function syncKitCapacityOptions() {
+    const sizeSelect = document.getElementById('systemSize');
+    if (!sizeSelect) return;
+
+    const kits = listKitsForForm();
+    const capacities = uniqueKitCapacities(kits);
+    const previous = parseFloat(sizeSelect.value);
+    sizeSelect.innerHTML = '';
+    sizeSelect.dataset.kitMode = '1';
+
+    capacities.forEach(dc => {
+        const sample = kits.find(sku => Math.abs(sku.dcKw - dc) < 0.001);
+        const option = document.createElement('option');
+        option.value = String(dc);
+        option.textContent = sample
+            ? `${dc} kW · ${sample.panels} × ${sample.panelWatt}W`
+            : `${dc} kW`;
+        sizeSelect.appendChild(option);
+    });
+
+    const match = capacities.find(dc => Math.abs(dc - previous) < 0.001);
+    if (match != null) {
+        sizeSelect.value = String(match);
+    } else if (capacities.length) {
+        const closest = capacities.slice().sort((a, b) => Math.abs(a - previous) - Math.abs(b - previous))[0];
+        sizeSelect.value = String(closest);
+    }
+
+    const hint = document.getElementById('systemSizeHint');
+    if (hint) hint.textContent = 'Only kit DC sizes available for this brand, DCR and phase';
+
+    syncKitInverterOptions();
+}
+
+function updateKitMode(options) {
     if (!rates) return;
 
+    const refreshSizes = !options || options.refreshSizes !== false;
     const brand = document.getElementById('panelBrand').value;
     const kitHint = document.getElementById('kitBrandHint');
     const categorySelect = document.getElementById('panelCategory');
@@ -502,48 +692,27 @@ function updateKitMode() {
 
     if (!kitBased) {
         if (kitHint) kitHint.textContent = '';
-        const inverterSelect = document.getElementById('inverterBrand');
-        if (inverterSelect && (inverterSelect.value === 'kit' || inverterSelect.options.length === 1 && inverterSelect.options[0].value === 'kit')) {
-            updateInverterBrands();
-        }
+        restoreNonKitSelectors();
         return;
     }
 
-    const kit = kitFromForm(true);
-    if (kitHint) {
-        kitHint.textContent = kit
-            ? `Kit brand — ${kit.panels} × ${kit.panelWatt}W (${kit.dcKw} kW). Includes ${kitIncludeLabel(kit.includes)}. Extra BOS is added on top.`
-            : 'Kit brand — no matching kit for this type / DCR / phase. Choose a listed kit size.';
+    setInverterFieldMode(true);
+    if (refreshSizes) syncKitCapacityOptions();
+    else syncKitInverterOptions();
+}
+
+function restoreNonKitSelectors() {
+    const sizeSelect = document.getElementById('systemSize');
+    if (sizeSelect && sizeSelect.dataset.kitMode === '1') {
+        fillStandardSystemSizes(sizeSelect.value);
     }
-
-    if (kit) {
-        const panelTypeSelect = document.getElementById('panelType');
-        if (panelTypeSelect) panelTypeSelect.value = 'topcon_bifacial';
-
-        const capacitySelect = document.getElementById('panelCapacity');
-        if (capacitySelect) {
-            const hasWatt = Array.from(capacitySelect.options).some(opt => Number(opt.value) === kit.panelWatt);
-            if (!hasWatt) {
-                const option = document.createElement('option');
-                option.value = kit.panelWatt;
-                option.textContent = `${kit.panelWatt}W`;
-                capacitySelect.appendChild(option);
-            }
-            capacitySelect.value = String(kit.panelWatt);
-        }
-
-        const inverterCap = document.getElementById('inverterCapacity');
-        if (inverterCap) inverterCap.value = kit.inverterKw;
-
-        const phaseSelect = document.getElementById('phaseType');
-        if (phaseSelect && phaseSelect.value !== kit.phase) {
-            // Keep the salesperson's phase; matching already preferred it.
-        }
+    setInverterFieldMode(false);
+    const kitSkuInput = document.getElementById('kitSku');
+    if (kitSkuInput) kitSkuInput.value = '';
+    const inverterSelect = document.getElementById('inverterBrand');
+    if (inverterSelect && (inverterSelect.value === 'kit' || (inverterSelect.options.length === 1 && inverterSelect.options[0].value === 'kit'))) {
+        updateInverterBrands();
     }
-
-    updateInverterBrands();
-    resetPanelCountAdjustment();
-    updatePanelCount();
 }
 
 // Function to update panel capacity options based on brand and panel type
@@ -1006,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (inverterCapacityInput && !isKitBrand(document.getElementById('panelBrand').value)) {
                 inverterCapacityInput.value = this.value;
             }
-            updateKitMode();
+            updateKitMode({ refreshSizes: false });
         });
     }
     
@@ -1101,6 +1270,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const phaseTypeSelect = document.getElementById('phaseType');
     if (phaseTypeSelect) {
         phaseTypeSelect.addEventListener('change', updateKitMode);
+    }
+
+    const inverterCapacityKit = document.getElementById('inverterCapacityKit');
+    if (inverterCapacityKit) {
+        inverterCapacityKit.addEventListener('change', applySelectedKitSku);
     }
     
     if (panelTypeSelect) {
@@ -1263,7 +1437,8 @@ function calculateQuotation(params) {
         discount,
         customerName, 
         location,
-        panelCountOverride
+        panelCountOverride,
+        kitSku
     } = params;
     
     // Ensure numeric values are properly parsed
@@ -1295,7 +1470,8 @@ function calculateQuotation(params) {
             category: panelCategory === 'nonDcr' ? 'nonDcr' : (panelCategory === 'mixed' ? null : panelCategory),
             phase: phaseType,
             systemSize: numSystemSize,
-            inverterKw: numInverterCapacity
+            inverterKw: numInverterCapacity,
+            kitId: kitSku
         })
         : null;
 
