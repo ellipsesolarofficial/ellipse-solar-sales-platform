@@ -470,7 +470,8 @@ function kitIncludeLabel(includes) {
         acdb: 'ACDB',
         dcdb: 'DCDB',
         earthing1mtr: 'earthing rods',
-        chemicalBags: 'earthing compound',
+        chemicalBags: 'chemical bag',
+        lightningArrester: 'LA',
         dcWire: 'DC wire',
         mc4Connector: 'MC4',
         battery: 'lithium battery'
@@ -1503,7 +1504,7 @@ function calculateQuotation(params) {
     Object.keys(rates.components).forEach(key => {
         const comp = { ...rates.components[key] }; // Clone to avoid modifying original
 
-        if (kit && ['earthing1mtr', 'chemicalBags', 'dcWire', 'mc4Connector'].indexOf(key) !== -1 && kitIncludes(kit, key)) {
+        if (kit && kitIncludes(kit, key)) {
             const label = typeof comp.displayName === 'string' ? comp.displayName : (comp.description || key);
             componentCosts[key] = {
                 name: `${label} (included in kit)`,
@@ -1865,7 +1866,7 @@ function displayQuotation(data) {
         ['AC Cable', getDisplayName(rc.acWire, 'AC Cable')],
         ['MC4 Connectors', markKit(`${getDisplayName(rc.mc4Connector, 'MC4 Connectors')} - ${q.panelCount + 4} Pairs`, 'mc4Connector')],
         ['Drain Clip', `${getDisplayName(rc.drainClip, 'Universal Drain Clip (30 MM)')} - ${q.panelCount * ((rc.drainClip && rc.drainClip.quantityPerPanel) || 2)} Pcs`],
-        ['Lightning Arrester', getDisplayName(rc.lightningArrester, 'Lightning Arrester')],
+        ['Lightning Arrester', markKit(getDisplayName(rc.lightningArrester, 'Lightning Arrester'), 'lightningArrester')],
         ['Solar Meter', getDisplayName(rc.solarMeter, 'L&T / Lauritz Knudsen')]
     ];
     
