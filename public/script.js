@@ -403,8 +403,17 @@ function isKitBrand(panelBrand) {
     return !!(brandConfig && brandConfig.kitBased);
 }
 
+function isKitPricePending(panelBrand) {
+    const brandConfig = rates && rates.solarPanels && rates.solarPanels[panelBrand];
+    if (!brandConfig || !brandConfig.kitBased) return false;
+    if (brandConfig.kitPricePending) return true;
+    const catalog = getKitCatalog(panelBrand);
+    return !catalog || !((catalog.skus || []).length);
+}
+
 function getKitCatalog(panelBrand) {
     const brandConfig = (rates.solarPanels && rates.solarPanels[panelBrand]) || {};
+    if (brandConfig.kitPricePending) return null;
     const key = brandConfig.kitCatalog || panelBrand;
     return (rates.kits && rates.kits[key]) || null;
 }
@@ -679,6 +688,17 @@ function syncKitInverterOptions() {
     const previous = invSelect.value;
 
     invSelect.innerHTML = '';
+    if (!forSize.length) {
+        const pending = document.createElement('option');
+        pending.value = '';
+        pending.textContent = 'To be updated';
+        invSelect.appendChild(pending);
+        const hidden = document.getElementById('inverterCapacity');
+        if (hidden) hidden.value = '';
+        const kitSkuInput = document.getElementById('kitSku');
+        if (kitSkuInput) kitSkuInput.value = '';
+        return;
+    }
     forSize.forEach(sku => {
         const option = document.createElement('option');
         option.value = sku.id;
@@ -701,6 +721,18 @@ function syncKitCapacityOptions() {
     const previous = parseFloat(sizeSelect.value);
     sizeSelect.innerHTML = '';
     sizeSelect.dataset.kitMode = '1';
+
+    if (!capacities.length) {
+        const pending = document.createElement('option');
+        pending.value = '';
+        pending.textContent = 'To be updated';
+        sizeSelect.appendChild(pending);
+        sizeSelect.value = '';
+        const hint = document.getElementById('systemSizeHint');
+        if (hint) hint.textContent = 'Kit prices to be updated for this brand';
+        syncKitInverterOptions();
+        return;
+    }
 
     capacities.forEach(dc => {
         const matches = kits.filter(sku => Math.abs(sku.dcKw - dc) < 0.001);
@@ -758,6 +790,28 @@ function updateKitMode(options) {
         return;
     }
 
+    const brandConfig = rates.solarPanels[brand] || {};
+    if (isKitPricePending(brand)) {
+        if (kitHint) {
+            kitHint.textContent = `${brandConfig.name || 'This brand'} kit prices are to be updated. Only Tata kits have live prices.`;
+        }
+        setInverterFieldMode(true);
+        if (refreshSizes) syncKitCapacityOptions();
+        else syncKitInverterOptions();
+        const inverterSelect = document.getElementById('inverterBrand');
+        if (inverterSelect) {
+            inverterSelect.innerHTML = '';
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'To be updated';
+            inverterSelect.appendChild(option);
+            inverterSelect.value = '';
+        }
+        const invHint = document.getElementById('inverterBrandHint');
+        if (invHint) invHint.textContent = 'Kit inverter list will appear when this brand’s prices are added';
+        return;
+    }
+
     setInverterFieldMode(true);
     if (refreshSizes) syncKitCapacityOptions();
     else syncKitInverterOptions();
@@ -772,7 +826,7 @@ function restoreNonKitSelectors() {
     const kitSkuInput = document.getElementById('kitSku');
     if (kitSkuInput) kitSkuInput.value = '';
     const inverterSelect = document.getElementById('inverterBrand');
-    if (inverterSelect && (inverterSelect.value === 'kit' || (inverterSelect.options.length === 1 && inverterSelect.options[0].value === 'kit'))) {
+    if (inverterSelect && (inverterSelect.value === 'kit' || !inverterSelect.value || (inverterSelect.options.length === 1 && (inverterSelect.options[0].value === 'kit' || inverterSelect.options[0].value === '')))) {
         updateInverterBrands();
     }
     fillStandardInverterOptions();
@@ -1398,7 +1452,7 @@ function getBrandProfit(brandConfig, systemSize) {
     if (table && table[key] != null) {
         return Number(table[key]) || 0;
     }
-    if (brandConfig && brandConfig.kitBased && rates.solarPanels.tata) {
+    if (brandConfig && brandConfig.kitCatalog === 'tata' && rates.solarPanels.tata) {
         const tataTable = rates.solarPanels.tata.profitByCapacity || {};
         if (tataTable[key] != null) return Number(tataTable[key]) || 0;
     }
@@ -1558,6 +1612,9 @@ function calculateQuotation(params) {
 
     if (brandConfig.kitBased && panelCategory === 'mixed') {
         throw new Error(`${brandConfig.name} is a kit brand and cannot use a Mixed DCR split. Choose DCR or Non-DCR.`);
+    }
+    if (brandConfig.kitBased && (brandConfig.kitPricePending || !kitCatalog)) {
+        throw new Error(`${brandConfig.name} kit prices are to be updated. Only Tata kits can be quoted right now.`);
     }
     if (brandConfig.kitBased && !kit) {
         throw new Error(`No ${brandConfig.name} kit for ${numSystemSize} kW ${normalizePhase(phaseType)} ${systemTypeConfig.name}.`);
@@ -2651,6 +2708,12 @@ calculateBtn.addEventListener('click', () => {
     params.location = params.location || '';
     delete params.phoneNumber;
     delete params.salesperson;
+
+    if (isKitPricePending(params.panelBrand)) {
+        const brandName = (rates.solarPanels[params.panelBrand] || {}).name || 'This brand';
+        alert(`${brandName} kit prices are to be updated. Only Tata kits can be quoted right now.`);
+        return;
+    }
     
     if (!params.systemSize) {
         alert('Please select a system size');
@@ -2723,6 +2786,12 @@ form.addEventListener('submit', (e) => {
     delete params.phoneNumber;
     const salesperson = params.salesperson || '';
     delete params.salesperson;
+
+    if (isKitPricePending(params.panelBrand)) {
+        const brandName = (rates.solarPanels[params.panelBrand] || {}).name || 'This brand';
+        alert(`${brandName} kit prices are to be updated. Only Tata kits can be quoted right now.`);
+        return;
+    }
     
     if (!params.systemSize) {
         alert('Please select a system size');

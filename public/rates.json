@@ -348,171 +348,31 @@
     "eastman": {
       "name": "Eastman",
       "kitBased": true,
-      "kitCatalog": "tata",
-      "monoperc": {
-        "dcr": {
-          "pricePerWatt": 29.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 27.0
-        },
-        "capacities": [
-          540,
-          545,
-          550
-        ],
-        "defaultCapacity": 545
-      },
-      "topcon": {
-        "dcr": {
-          "pricePerWatt": 30.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 14.5
-        },
-        "capacities": [
-          585,
-          590,
-          600
-        ],
-        "defaultCapacity": 590
-      },
+      "kitPricePending": true,
       "warranty": 25
     },
     "luminous": {
       "name": "Luminous",
       "kitBased": true,
-      "kitCatalog": "tata",
-      "monoperc": {
-        "dcr": {
-          "pricePerWatt": 29.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 27.0
-        },
-        "capacities": [
-          540,
-          545,
-          550
-        ],
-        "defaultCapacity": 545
-      },
-      "topcon": {
-        "dcr": {
-          "pricePerWatt": 30.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 14.5
-        },
-        "capacities": [
-          585,
-          590,
-          600
-        ],
-        "defaultCapacity": 590
-      },
+      "kitPricePending": true,
       "warranty": 25
     },
     "panasonic": {
       "name": "Panasonic",
       "kitBased": true,
-      "kitCatalog": "tata",
-      "monoperc": {
-        "dcr": {
-          "pricePerWatt": 29.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 27.0
-        },
-        "capacities": [
-          540,
-          545,
-          550
-        ],
-        "defaultCapacity": 545
-      },
-      "topcon": {
-        "dcr": {
-          "pricePerWatt": 30.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 14.5
-        },
-        "capacities": [
-          585,
-          590,
-          600
-        ],
-        "defaultCapacity": 590
-      },
+      "kitPricePending": true,
       "warranty": 25
     },
     "havells": {
       "name": "Havells",
       "kitBased": true,
-      "kitCatalog": "tata",
-      "monoperc": {
-        "dcr": {
-          "pricePerWatt": 29.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 27.0
-        },
-        "capacities": [
-          540,
-          545,
-          550
-        ],
-        "defaultCapacity": 545
-      },
-      "topcon": {
-        "dcr": {
-          "pricePerWatt": 30.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 14.5
-        },
-        "capacities": [
-          585,
-          590,
-          600
-        ],
-        "defaultCapacity": 590
-      },
+      "kitPricePending": true,
       "warranty": 25
     },
     "reliance": {
       "name": "Reliance",
       "kitBased": true,
-      "kitCatalog": "tata",
-      "monoperc": {
-        "dcr": {
-          "pricePerWatt": 29.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 27.0
-        },
-        "capacities": [
-          540,
-          545,
-          550
-        ],
-        "defaultCapacity": 545
-      },
-      "topcon": {
-        "dcr": {
-          "pricePerWatt": 30.5
-        },
-        "nonDcr": {
-          "pricePerWatt": 14.5
-        },
-        "capacities": [
-          585,
-          590,
-          600
-        ],
-        "defaultCapacity": 590
-      },
+      "kitPricePending": true,
       "warranty": 25
     },
     "renewsys": {
