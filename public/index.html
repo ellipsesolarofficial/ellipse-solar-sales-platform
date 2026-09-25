@@ -81,6 +81,43 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="panelBrand">Panel Brand *</label>
+                            <select id="panelBrand" name="panelBrand" required>
+                                <option value="ina" selected>INA</option>
+                                <option value="adani">Adani</option>
+                                <option value="waree">Waaree</option>
+                                <option value="tata">Tata</option>
+                                <option value="eastman">Eastman</option>
+                                <option value="luminous">Luminous</option>
+                                <option value="panasonic">Panasonic</option>
+                                <option value="havells">Havells</option>
+                                <option value="reliance">Reliance</option>
+                                <option value="renewsys">Renewsys</option>
+                                <option value="premier">Premier</option>
+                            </select>
+                            <small id="kitBrandHint">Select brand first. Capacity options then match what that brand sells.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="panelCategory">DCR / Non-DCR *</label>
+                            <select id="panelCategory" name="panelCategory" required>
+                                <option value="dcr" selected>DCR (Domestic Content)</option>
+                                <option value="nonDcr">Non-DCR (Imported Cells)</option>
+                                <option value="mixed">Mixed (DCR + Non-DCR)</option>
+                            </select>
+                            <small>DCR panels are required for government subsidy eligibility</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phaseType">Phase Type *</label>
+                            <select id="phaseType" name="phaseType" required>
+                                <option value="1ph" selected>1 Phase</option>
+                                <option value="3ph">3 Phase</option>
+                            </select>
+                            <small>Select based on your electrical connection</small>
+                        </div>
+
+                        <div class="form-group">
                             <label for="systemSize">System Capacity (kW) *</label>
                             <select id="systemSize" name="systemSize" required>
                                 <option value="3" selected>3 kW</option>
@@ -134,47 +171,10 @@
                             </select>
                             <small id="systemSizeHint">Select system capacity from 3kW to 50kW</small>
                         </div>
-
-                        <div class="form-group">
-                            <label for="phaseType">Phase Type *</label>
-                            <select id="phaseType" name="phaseType" required>
-                                <option value="1ph" selected>1 Phase</option>
-                                <option value="3ph">3 Phase</option>
-                            </select>
-                            <small>Select based on your electrical connection</small>
-                        </div>
                     </div>
 
                     <div class="form-section">
                         <h3>Panel Configuration</h3>
-                        
-                        <div class="form-group">
-                            <label for="panelBrand">Panel Brand *</label>
-                            <select id="panelBrand" name="panelBrand" required onchange="updatePanelCapacityOptions()">
-                                <option value="ina" selected>INA</option>
-                                <option value="adani">Adani</option>
-                                <option value="waree">Waaree</option>
-                                <option value="tata">Tata</option>
-                                <option value="eastman">Eastman</option>
-                                <option value="luminous">Luminous</option>
-                                <option value="panasonic">Panasonic</option>
-                                <option value="havells">Havells</option>
-                                <option value="reliance">Reliance</option>
-                                <option value="renewsys">Renewsys</option>
-                                <option value="premier">Premier</option>
-                            </select>
-                            <small id="kitBrandHint"></small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="panelCategory">DCR / Non-DCR *</label>
-                            <select id="panelCategory" name="panelCategory" required>
-                                <option value="dcr" selected>DCR (Domestic Content)</option>
-                                <option value="nonDcr">Non-DCR (Imported Cells)</option>
-                                <option value="mixed">Mixed (DCR + Non-DCR)</option>
-                            </select>
-                            <small>DCR panels are required for government subsidy eligibility</small>
-                        </div>
 
                         <div class="form-group" id="mixedSplitGroup" style="display: none;">
                             <label>Capacity Split (kW) *</label>
@@ -223,14 +223,6 @@
 
                     <div class="form-section">
                         <h3>Inverter Configuration</h3>
-                        
-                        <div class="form-group">
-                            <label for="inverterCapacityKit">Inverter Capacity *</label>
-                            <select id="inverterCapacityKit" required></select>
-                            <input type="hidden" id="inverterCapacity" name="inverterCapacity" value="3">
-                            <input type="hidden" id="kitSku" name="kitSku" value="">
-                            <small id="inverterCapacityHint">Available inverter sizes for the selected brand and phase</small>
-                        </div>
 
                         <div class="form-group">
                             <label for="inverterBrand">Inverter Brand</label>
@@ -238,6 +230,14 @@
                                 <option value="polycab" selected>Polycab</option>
                             </select>
                             <small id="inverterBrandHint">Options depend on the selected system type</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="inverterCapacityKit">Inverter Capacity *</label>
+                            <select id="inverterCapacityKit" required></select>
+                            <input type="hidden" id="inverterCapacity" name="inverterCapacity" value="3">
+                            <input type="hidden" id="kitSku" name="kitSku" value="">
+                            <small id="inverterCapacityHint">Available inverter sizes for the selected brand and phase</small>
                         </div>
                     </div>
 

@@ -747,7 +747,7 @@ function updateKitMode(options) {
     if (plusBtn) plusBtn.disabled = kitBased;
 
     if (!kitBased) {
-        if (kitHint) kitHint.textContent = '';
+        if (kitHint) kitHint.textContent = 'Select brand first. Capacity options then match what that brand sells.';
         restoreNonKitSelectors();
         return;
     }
