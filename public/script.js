@@ -10,7 +10,8 @@ let rates = null;
 function loadRates() {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('GET', 'rates.json', true);
+        const ratesUrl = 'rates.json' + (window.location.search || ('?v=' + Date.now()));
+        xhr.open('GET', ratesUrl, true);
         xhr.onload = function() {
             if (xhr.status === 200 || xhr.status === 0) { // status 0 for file:// protocol
                 try {
