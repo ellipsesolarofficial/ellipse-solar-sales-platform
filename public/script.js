@@ -2882,9 +2882,23 @@ function quoteRateListAmount(brand, panelType, category, systemSize) {
     return Math.round(quotation.breakdown.finalAmount);
 }
 
-function generatePriceListPDF() {
+function priceListDateParts(now = new Date()) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const day = now.getDate();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+    const padded = String(day).padStart(2, '0');
+    return {
+        display: `${day} ${fullMonths[month]} ${year}`,
+        file: `${padded}-${months[month]}-${year}`
+    };
+}
+
+function generatePriceListPDF(generatedOn = new Date()) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const dated = priceListDateParts(generatedOn);
     const sizes = Array.from({ length: 18 }, (_, i) => i + 3);
     const groups = [
         { title: 'Adani / Waaree', brand: 'adani', note: 'Adani live rates (Waaree grouped with Adani)' },
@@ -2907,6 +2921,8 @@ function generatePriceListPDF() {
             doc.setFontSize(16);
             doc.setTextColor(11, 61, 92);
             doc.text('Ellipse Solar — Telecaller Rate List', 14, 14);
+            doc.setFontSize(10);
+            doc.text(`Price list as of ${dated.display}`, 283, 14, { align: 'right' });
             doc.setFontSize(12);
             doc.text(`${group.title}  ·  ${tech.title}`, 14, 22);
             doc.setFont('helvetica', 'normal');
@@ -2958,10 +2974,11 @@ function generatePriceListPDF() {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
             doc.setTextColor(90, 90, 90);
-            doc.text('* 3 kW mixed is the same as full DCR. Polycab inverter, TATA structure, 1-floor rooftop, no sales category.', 14, y + 8);
+            doc.text(`These are the prices as of ${dated.display}. * 3 kW mixed is the same as full DCR. Polycab inverter, TATA structure, 1-floor rooftop, no sales category.`, 14, y + 8);
         });
     });
 
+    doc.priceListFileDate = dated.file;
     return doc;
 }
 
@@ -2977,7 +2994,10 @@ function downloadPriceList() {
     loading.style.display = 'flex';
     setTimeout(() => {
         try {
-            generatePriceListPDF().save('Ellipse_Solar_Telecaller_Rate_List.pdf');
+            const generatedOn = new Date();
+            const doc = generatePriceListPDF(generatedOn);
+            const stamp = doc.priceListFileDate || priceListDateParts(generatedOn).file;
+            doc.save(`Ellipse_Solar_Telecaller_Rate_List_${stamp}.pdf`);
         } catch (error) {
             alert('Error: ' + error.message);
         } finally {
