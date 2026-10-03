@@ -2978,8 +2978,47 @@ function generatePriceListPDF(generatedOn = new Date()) {
         });
     });
 
+    stampPriceListWatermark(doc, dated);
     doc.priceListFileDate = dated.file;
     return doc;
+}
+
+function stampPriceListWatermark(doc, dated) {
+    const pageCount = doc.internal.getNumberOfPages();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const mark = 'ELLIPSE SOLAR  •  CONFIDENTIAL  •  INTERNAL USE ONLY';
+    const sub = `Not for sharing or reuse  •  ${dated.display}`;
+    const canFade = typeof doc.GState === 'function';
+
+    for (let page = 1; page <= pageCount; page++) {
+        doc.setPage(page);
+        if (canFade) {
+            doc.saveGraphicsState();
+            doc.setGState(new doc.GState({ opacity: 0.16 }));
+            doc.setTextColor(176, 32, 32);
+        } else {
+            doc.setTextColor(220, 190, 190);
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(26);
+        doc.text(mark, pageWidth / 2, pageHeight / 2 - 4, { align: 'center', angle: 28 });
+        doc.setFontSize(14);
+        doc.text(sub, pageWidth / 2, pageHeight / 2 + 10, { align: 'center', angle: 28 });
+        if (canFade) {
+            doc.restoreGraphicsState();
+        }
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(140, 40, 40);
+        doc.text(
+            `Confidential — Ellipse Solar price list as of ${dated.display}. For company telecallers only. Do not share or reuse.`,
+            pageWidth / 2,
+            pageHeight - 6,
+            { align: 'center' }
+        );
+    }
 }
 
 function downloadPriceList() {
