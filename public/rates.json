@@ -7,7 +7,7 @@
           "pricePerWatt": 22.5
         },
         "nonDcr": {
-          "pricePerWatt": 21.0
+          "pricePerWatt": 13.3
         },
         "capacities": [
           540,
@@ -469,7 +469,7 @@
           "pricePerWatt": 23.75
         },
         "nonDcr": {
-          "pricePerWatt": 21.25
+          "pricePerWatt": 13.3
         },
         "capacities": [
           540,
