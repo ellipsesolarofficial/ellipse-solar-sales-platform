@@ -548,42 +548,64 @@ function setInverterFieldMode(kitBased) {
     if (!hint) return;
     hint.textContent = kitBased
         ? 'Only the inverter sizes sold with this kit capacity'
-        : 'Available inverter sizes for the selected brand and phase';
+        : 'All inverter sizes from the rate list. Pick any size — not limited to the system kW';
 }
 
 function listBrandInverterTiers() {
     const systemType = document.getElementById('systemType').value;
     const brand = document.getElementById('inverterBrand').value;
-    const phaseKey = normalizePhase(document.getElementById('phaseType').value);
-    const phaseLabel = phaseKey === '3ph' ? '3Ph' : '1Ph';
     const config = ((rates.inverters || {})[systemType] || {})[brand] || {};
     const tiers = config.pricingTiers || {};
     const rows = [];
 
     Object.entries(tiers).forEach(([key, tier]) => {
-        if (tier.phase && tier.phase !== phaseLabel) return;
         const kwMatch = String(key).match(/^(\d+\.?\d*)/);
         const kw = parseFloat(tier.kw != null ? tier.kw : (kwMatch && kwMatch[1]));
         if (!kw) return;
+        const phaseLabel = tier.phase === '3Ph' ? '3 Phase' : (tier.phase === '1Ph' ? '1 Phase' : '');
         rows.push({
             key,
             kw,
             mppt: tier.mppt,
-            label: `${kw} kW ${phaseKey === '3ph' ? '3 Phase' : '1 Phase'}${tier.mppt ? ` · ${tier.mppt} MPPT` : ''}`
+            phase: tier.phase || '',
+            label: `${kw} kW${phaseLabel ? ` ${phaseLabel}` : ''}${tier.mppt ? ` · ${tier.mppt} MPPT` : ''}`
         });
     });
 
-    rows.sort((a, b) => a.kw - b.kw || (a.mppt || 0) - (b.mppt || 0));
+    rows.sort((a, b) => a.kw - b.kw || (a.mppt || 0) - (b.mppt || 0) || String(a.phase).localeCompare(String(b.phase)));
     return rows;
+}
+
+function applySelectedInverterTier() {
+    const select = document.getElementById('inverterCapacityKit');
+    const hidden = document.getElementById('inverterCapacity');
+    const keyInput = document.getElementById('inverterTierKey');
+    const selected = select && select.selectedOptions[0];
+    if (!selected) return;
+    if (hidden) hidden.value = selected.dataset.kw || selected.value;
+    if (keyInput) keyInput.value = selected.value || '';
+}
+
+function inverterSpecLabel(inverterConfig, capacityKw, tierKey) {
+    const tier = inverterConfig && inverterConfig.pricingTiers && inverterConfig.pricingTiers[tierKey];
+    if (!tier) return `${capacityKw}kW`;
+    const kwMatch = String(tierKey).match(/^(\d+\.?\d*)/);
+    const kw = tier.kw != null ? tier.kw : (kwMatch ? kwMatch[1] : capacityKw);
+    const bits = [`${kw}kW`];
+    if (tier.phase) bits.push(tier.phase);
+    if (tier.mppt) bits.push(`${tier.mppt} MPPT`);
+    return bits.join(' · ');
 }
 
 function fillStandardInverterOptions() {
     const select = document.getElementById('inverterCapacityKit');
     const hidden = document.getElementById('inverterCapacity');
+    const keyInput = document.getElementById('inverterTierKey');
     if (!select || isKitBrand(document.getElementById('panelBrand').value)) return;
 
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 3;
-    const previous = hidden ? parseFloat(hidden.value) : systemSize;
+    const previousKey = (keyInput && keyInput.value) || select.value;
+    const previousKw = hidden ? parseFloat(hidden.value) : NaN;
     const tiers = listBrandInverterTiers();
     const kitSkuInput = document.getElementById('kitSku');
     if (kitSkuInput) kitSkuInput.value = '';
@@ -597,9 +619,10 @@ function fillStandardInverterOptions() {
             option.textContent = `${kw} kW`;
             select.appendChild(option);
         });
-        const keep = Math.round(previous || systemSize);
+        const keep = Math.round(Number.isFinite(previousKw) ? previousKw : systemSize);
         select.value = STANDARD_SYSTEM_SIZES.indexOf(keep) !== -1 ? String(keep) : String(systemSize);
         if (hidden) hidden.value = select.value;
+        if (keyInput) keyInput.value = '';
         return;
     }
 
@@ -607,17 +630,21 @@ function fillStandardInverterOptions() {
         const option = document.createElement('option');
         option.value = tier.key;
         option.dataset.kw = String(tier.kw);
+        option.dataset.phase = tier.phase || '';
+        option.dataset.mppt = tier.mppt != null ? String(tier.mppt) : '';
         option.textContent = tier.label;
         select.appendChild(option);
     });
 
-    const exact = tiers.find(tier => tier.kw === previous);
+    const keep = previousKey ? tiers.find(tier => tier.key === previousKey) : null;
+    const exact = Number.isFinite(previousKw) ? tiers.find(tier => tier.kw === previousKw) : null;
+    const targetKw = Number.isFinite(previousKw) ? previousKw : systemSize;
     const closest = tiers.slice().sort((a, b) => (
-        Math.abs(a.kw - (previous || systemSize)) - Math.abs(b.kw - (previous || systemSize))
+        Math.abs(a.kw - targetKw) - Math.abs(b.kw - targetKw)
     ))[0];
-    const chosen = exact || closest;
+    const chosen = keep || exact || closest;
     select.value = chosen.key;
-    if (hidden) hidden.value = String(chosen.kw);
+    applySelectedInverterTier();
 }
 
 function fillStandardSystemSizes(preferred) {
@@ -1316,9 +1343,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!isKitBrand(document.getElementById('panelBrand').value)) {
                 updatePanelCapacityByType();
-                const hidden = document.getElementById('inverterCapacity');
-                if (hidden) hidden.value = this.value;
-                fillStandardInverterOptions();
             } else {
                 updatePanelCount();
             }
@@ -1418,7 +1442,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (phaseTypeSelect) {
         phaseTypeSelect.addEventListener('change', function() {
             if (isKitBrand(document.getElementById('panelBrand').value)) updateKitMode();
-            else fillStandardInverterOptions();
         });
     }
 
@@ -1434,9 +1457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 applySelectedKitSku();
                 return;
             }
-            const hidden = document.getElementById('inverterCapacity');
-            const selected = this.selectedOptions[0];
-            if (hidden) hidden.value = (selected && selected.dataset.kw) || this.value;
+            applySelectedInverterTier();
         });
     }
     
@@ -1497,7 +1518,7 @@ function capitalize(str) {
 }
 
 // Get inverter price - supports both flat pricePerKW and tier-based pricing (e.g., Polycab)
-function getInverterPrice(inverterConfig, capacityKW, phaseType) {
+function getInverterPrice(inverterConfig, capacityKW, phaseType, tierKey) {
     // If inverter has simple pricePerKW, use that
     if (inverterConfig.pricePerKW) {
         return capacityKW * inverterConfig.pricePerKW;
@@ -1505,6 +1526,10 @@ function getInverterPrice(inverterConfig, capacityKW, phaseType) {
     
     // If inverter has tier-based pricing (like Polycab)
     if (inverterConfig.pricingTiers) {
+        const selectedTier = tierKey && inverterConfig.pricingTiers[tierKey];
+        if (selectedTier && selectedTier.price != null) {
+            return Number(selectedTier.price) || 0;
+        }
         const tiers = inverterConfig.pricingTiers;
         // Up to 4kW always use 1 Phase inverter
         let phase = (phaseType === '3phase' || phaseType === '3ph') ? '3Ph' : '1Ph';
@@ -1583,7 +1608,8 @@ function calculateQuotation(params) {
         dcrCapacity,
         nonDcrCapacity,
         inverterCapacity, 
-        inverterBrand, 
+        inverterBrand,
+        inverterTierKey,
         systemType,
         batteryBackup,
         batteryChemistry,
@@ -1757,7 +1783,10 @@ function calculateQuotation(params) {
     const panelBaseCost = kit ? 0 : panelSegments.reduce((sum, s) => sum + s.cost, 0);
     
     // 2. INVERTER - Calculate base cost (no per-item GST)
-    const inverterBaseCost = kit ? 0 : getInverterPrice(inverterConfig, numInverterCapacity, phaseType);
+    const inverterBaseCost = kit ? 0 : getInverterPrice(inverterConfig, numInverterCapacity, phaseType, inverterTierKey);
+    const inverterSpec = kit
+        ? `${kit.inverterKw}kW`
+        : inverterSpecLabel(inverterConfig, numInverterCapacity, inverterTierKey);
     const kitBaseCost = kit ? Number(kit.basicPrice) || 0 : 0;
     
     // 2b. BATTERY BANK - added when the salesperson says backup is required
@@ -2071,6 +2100,8 @@ function calculateQuotation(params) {
         panelSegments,
         inverterCapacity: kit ? kit.inverterKw : numInverterCapacity,
         inverterBrand: kit ? 'kit' : inverterBrand,
+        inverterTierKey: kit ? '' : (inverterTierKey || ''),
+        inverterSpec,
         kitDetails: kit ? {
             brand: brandConfig.name,
             catalog: kitCatalog && kitCatalog.name,
@@ -2163,7 +2194,7 @@ function displayQuotation(data) {
     }
     document.getElementById('quoteSize').innerHTML = sizeText;
     document.getElementById('quotePanelType').textContent = `${q.panelConfig.name}`;
-    document.getElementById('quoteInverterType').textContent = `${q.inverterConfig.name} ${q.inverterCapacity}kW`
+    document.getElementById('quoteInverterType').textContent = `${q.inverterConfig.name} ${q.inverterSpec || (q.inverterCapacity + 'kW')}`
         + (q.batteryInverterDetails ? ` + ${q.batteryInverterDetails.brand} ${q.batteryInverterDetails.label} battery inverter` : '');
     document.getElementById('quoteMountingType').textContent = `${q.structureBrand} Structure - ${q.numberOfFloors} Floor(s)`;
     document.getElementById('quoteGeneration').textContent = 
@@ -2194,7 +2225,7 @@ function displayQuotation(data) {
     const materialRows = [
         ...(q.kitDetails ? [['System Kit', `${q.kitDetails.brand} ${q.kitDetails.dcKw} kW kit — includes ${kitIncludeLabel(q.kitDetails.includes)}`]] : []),
         ['Solar Panels', markKit(`${q.panelConfig.name} - ${panelSummary}`, 'panels')],
-        ['Inverter', markKit(`${q.inverterConfig.name} ${q.inverterCapacity}kW WiFi Enabled`, 'inverter')],
+        ['Inverter', markKit(`${q.inverterConfig.name} ${q.inverterSpec || (q.inverterCapacity + 'kW')} WiFi Enabled`, 'inverter')],
         ...(q.batteryInverterDetails ? [['Inverter for Batteries', `${q.batteryInverterDetails.brand} ${q.batteryInverterDetails.label}`]] : []),
         ...(q.batteryDetails ? [['Battery Bank', markKit(`${q.batteryDetails.brand} ${q.batteryDetails.chemistry}${q.batteryDetails.model ? ' · ' + q.batteryDetails.model : ''} ${q.batteryDetails.label} (${q.batteryDetails.kwhPerUnit} kWh) × ${q.batteryDetails.quantity}`
             + (q.batteryDetails.quantity > 1 ? ` = ${q.batteryDetails.kwhTotal} kWh` : ''), 'battery')]] : []),
@@ -2248,7 +2279,7 @@ function displayQuotation(data) {
         
         breakdownHTML += `
             <tr>
-                <td><strong>Inverter</strong> (${q.inverterCapacity}kW ${q.inverterConfig.name} - tier price)</td>
+                <td><strong>Inverter</strong> (${q.inverterConfig.name} ${q.inverterSpec || (q.inverterCapacity + 'kW')} - tier price)</td>
                 <td>${formatCurrency(q.breakdown.inverterBaseCost)}</td>
             </tr>
         `;
@@ -2491,7 +2522,7 @@ function generatePDF(quotation) {
     const bomItems = [
         ...(q.kitDetails ? [['System Kit', q.kitDetails.brand, q.kitDetails.dcKw + ' kW kit', '1']] : []),
         ['Solar Module', brandName + ' (Bifacial)', panelCapacityLabel, String(q.panelCount)],
-        ['PCU/Inverter', q.inverterConfig.name, q.inverterCapacity + 'kW (' + phaseText + ')', '1'],
+        ['PCU/Inverter', q.inverterConfig.name, q.inverterSpec || (q.inverterCapacity + 'kW (' + phaseText + ')'), '1'],
         ...(q.batteryInverterDetails ? [['Battery Inverter', q.batteryInverterDetails.brand, q.batteryInverterDetails.label, '1']] : []),
         ...(q.batteryDetails ? [['Battery', `${q.batteryDetails.brand} (${q.batteryDetails.chemistry})`, q.batteryDetails.model ? `${q.batteryDetails.label} · ${q.batteryDetails.model}` : q.batteryDetails.label, String(q.batteryDetails.quantity)]] : []),
         ['Complete Set of Structure', 'G.I Standard (Tata/Apollo)', 'As per MNRE Standards', '1 Set'],
