@@ -2832,6 +2832,16 @@ form.addEventListener('submit', (e) => {
                 </button>
             `;
         }
+
+        const adminCode = document.getElementById('adminCode') ? document.getElementById('adminCode').value : '';
+        window.priceListUnlocked = adminCode === 'racecar';
+        if (window.priceListUnlocked) {
+            actionsHTML += `
+                <button type="button" onclick="downloadPriceList()" class="btn btn-secondary" style="margin: 10px;">
+                    Generate Price List
+                </button>
+            `;
+        }
         
         actionsHTML += '</div>';
         document.getElementById('quoteActions').innerHTML = actionsHTML;
@@ -2847,6 +2857,134 @@ form.addEventListener('submit', (e) => {
         loading.style.display = 'none';
     }
 });
+
+function quoteRateListAmount(brand, panelType, category, systemSize) {
+    const mixed = category === 'mixed';
+    const quotation = calculateQuotation({
+        systemSize,
+        panelBrand: brand,
+        panelCapacity: '',
+        panelType,
+        panelCategory: mixed ? 'mixed' : category,
+        dcrCapacity: mixed ? 3 : '',
+        nonDcrCapacity: mixed ? Math.max(0, systemSize - 3) : '',
+        inverterCapacity: systemSize,
+        inverterBrand: 'polycab',
+        systemType: 'ongrid',
+        batteryBackup: 'no',
+        structureBrand: 'tata',
+        phaseType: systemSize <= 5 ? '1ph' : '3ph',
+        siteType: 'standard',
+        numberOfFloors: 1,
+        commission: 0,
+        discount: 0
+    });
+    return Math.round(quotation.breakdown.finalAmount);
+}
+
+function generatePriceListPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const sizes = Array.from({ length: 18 }, (_, i) => i + 3);
+    const groups = [
+        { title: 'Adani / Waaree', brand: 'adani', note: 'Adani live rates (Waaree grouped with Adani)' },
+        { title: 'INA / Premier', brand: 'ina', note: 'INA live rates (Premier grouped with INA)' }
+    ];
+    const techs = [
+        { title: 'TOPCon', type: 'topcon_bifacial' },
+        { title: 'MonoPERC', type: 'monoperc_bifacial' }
+    ];
+
+    const money = value => 'Rs ' + Number(value).toLocaleString('en-IN');
+    let first = true;
+
+    groups.forEach(group => {
+        techs.forEach(tech => {
+            if (!first) doc.addPage('a4', 'landscape');
+            first = false;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(11, 61, 92);
+            doc.text('Ellipse Solar — Telecaller Rate List', 14, 14);
+            doc.setFontSize(12);
+            doc.text(`${group.title}  ·  ${tech.title}`, 14, 22);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(70, 70, 70);
+            doc.text(group.note + '. On-grid, GST 8.9% included. No battery. 1 Phase for 3-5 kW, 3 Phase for 6-20 kW.', 14, 28);
+
+            const headers = ['Capacity', 'Full DCR', 'Full Non-DCR', '3 kW DCR + rest Non-DCR'];
+            const colW = [40, 70, 70, 80];
+            const startX = 14;
+            let y = 36;
+            const rowH = 8;
+
+            const drawRow = (cells, header) => {
+                let x = startX;
+                cells.forEach((cell, i) => {
+                    doc.setFillColor(header ? 11 : (y % 16 < 8 ? 244 : 255), header ? 61 : 248, header ? 92 : 250);
+                    if (header) doc.setFillColor(11, 61, 92);
+                    doc.rect(x, y, colW[i], rowH, header ? 'F' : 'S');
+                    if (header) {
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFont('helvetica', 'bold');
+                    } else {
+                        doc.setTextColor(30, 30, 30);
+                        doc.setFont('helvetica', i === 0 ? 'bold' : 'normal');
+                    }
+                    doc.setFontSize(9);
+                    const label = String(cell);
+                    const tx = i === 0 ? x + 3 : x + colW[i] - 3;
+                    doc.text(label, tx, y + 5.4, { align: i === 0 ? 'left' : 'right' });
+                    x += colW[i];
+                });
+                y += rowH;
+            };
+
+            drawRow(headers, true);
+            sizes.forEach(kw => {
+                const dcr = quoteRateListAmount(group.brand, tech.type, 'dcr', kw);
+                const ndcr = quoteRateListAmount(group.brand, tech.type, 'nonDcr', kw);
+                const mixed = kw <= 3 ? dcr : quoteRateListAmount(group.brand, tech.type, 'mixed', kw);
+                drawRow([
+                    `${kw} kW`,
+                    money(dcr),
+                    money(ndcr),
+                    money(mixed) + (kw === 3 ? ' *' : '')
+                ], false);
+            });
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(90, 90, 90);
+            doc.text('* 3 kW mixed is the same as full DCR. Polycab inverter, TATA structure, 1-floor rooftop, no sales category.', 14, y + 8);
+        });
+    });
+
+    return doc;
+}
+
+function downloadPriceList() {
+    if (!window.priceListUnlocked) {
+        alert('Enter the sales access code and generate a quotation first.');
+        return;
+    }
+    if (!rates) {
+        alert('Configuration not loaded. Please refresh the page.');
+        return;
+    }
+    loading.style.display = 'flex';
+    setTimeout(() => {
+        try {
+            generatePriceListPDF().save('Ellipse_Solar_Telecaller_Rate_List.pdf');
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            loading.style.display = 'none';
+        }
+    }, 50);
+}
 
 // Download PDF function
 function downloadPDF() {
