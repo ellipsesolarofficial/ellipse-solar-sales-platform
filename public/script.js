@@ -837,12 +837,13 @@ function updatePanelCapacityByType() {
     const panelType = document.getElementById('panelType').value;
     const panelBrand = document.getElementById('panelBrand').value;
     const panelCapacitySelect = document.getElementById('panelCapacity');
-    const previous = parseInt(panelCapacitySelect.value, 10);
     const { capacities, defaultCapacity } = getBrandCapacityConfig(panelBrand, panelType);
+    const systemSize = parseFloat(document.getElementById('systemSize').value) || 0;
+    const sizeAwareDefault = bestWattageForSize(capacities, systemSize) || defaultCapacity;
     
     panelCapacitySelect.innerHTML = '';
     
-    const selectedWatt = capacities.includes(previous) ? previous : defaultCapacity;
+    const selectedWatt = capacities.includes(sizeAwareDefault) ? sizeAwareDefault : defaultCapacity;
     
     capacities.forEach(watt => {
         const option = document.createElement('option');
@@ -1080,6 +1081,32 @@ function nearestPanelCount(targetKW, panelWattage) {
     return best < 1 ? 1 : best;
 }
 
+// Pick the available wattage whose nearest panel count lands closest to the requested kW
+function bestWattageForSize(capacities, targetKW) {
+    const watts = (capacities || []).map(w => parseInt(w, 10)).filter(w => w > 0);
+    if (!watts.length) return null;
+    const size = parseFloat(targetKW) || 0;
+    if (size <= 0) return watts[0];
+    const targetWatts = size * 1000;
+
+    let best = watts[0];
+    let bestDiff = Infinity;
+    let bestDc = 0;
+
+    watts.forEach(watt => {
+        const dc = nearestPanelCount(size, watt) * watt;
+        const diff = Math.abs(dc - targetWatts);
+        const better = diff < bestDiff
+            || (diff === bestDiff && dc >= targetWatts && bestDc < targetWatts);
+        if (better) {
+            bestDiff = diff;
+            best = watt;
+            bestDc = dc;
+        }
+    });
+    return best;
+}
+
 // Salesperson can add or remove panels from the recommended count
 let panelCountAdjustment = 0;
 const PANEL_COUNT_MAX_EXTRA = 15;
@@ -1286,13 +1313,14 @@ document.addEventListener('DOMContentLoaded', function() {
             resetPanelCountAdjustment();
             // Re-split a mixed selection across the new system size
             updateMixedSplitVisibility(true);
-            updatePanelCount();
-            
-            // Also update inverter capacity to match system size
+
             if (!isKitBrand(document.getElementById('panelBrand').value)) {
+                updatePanelCapacityByType();
                 const hidden = document.getElementById('inverterCapacity');
                 if (hidden) hidden.value = this.value;
                 fillStandardInverterOptions();
+            } else {
+                updatePanelCount();
             }
             updateKitMode({ refreshSizes: false });
         });
@@ -1580,7 +1608,8 @@ function calculateQuotation(params) {
     const numSystemSize = parseFloat(systemSize) || 0;
     const { capacities: brandCapacities, defaultCapacity: brandDefaultCapacity } = getBrandCapacityConfig(panelBrand, panelType);
     const parsedCapacity = parseInt(panelCapacity, 10);
-    const numPanelCapacity = brandCapacities.includes(parsedCapacity) ? parsedCapacity : brandDefaultCapacity;
+    const sizeAwareDefault = bestWattageForSize(brandCapacities, numSystemSize) || brandDefaultCapacity;
+    const numPanelCapacity = brandCapacities.includes(parsedCapacity) ? parsedCapacity : sizeAwareDefault;
     const numInverterCapacity = parseFloat(inverterCapacity) || numSystemSize;
     const numCommission = parseFloat(commission) || 0;
     const numDiscount = parseFloat(discount) || 0;
