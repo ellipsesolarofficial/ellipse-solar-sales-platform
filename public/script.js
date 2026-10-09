@@ -548,7 +548,7 @@ function setInverterFieldMode(kitBased) {
     if (!hint) return;
     hint.textContent = kitBased
         ? 'Only the inverter sizes sold with this kit capacity'
-        : 'All inverter sizes from the rate list. Pick any size — not limited to the system kW';
+        : 'All inverter sizes from the rate list. Default is the matching kW, phase, and lowest MPPT';
 }
 
 function listBrandInverterTiers() {
@@ -597,6 +597,21 @@ function inverterSpecLabel(inverterConfig, capacityKw, tierKey) {
     return bits.join(' · ');
 }
 
+function defaultInverterTier(tiers, systemSize, phaseKey) {
+    const phaseLabel = phaseKey === '3ph' ? '3Ph' : '1Ph';
+    const samePhase = tiers.filter(tier => !tier.phase || tier.phase === phaseLabel);
+    const pool = samePhase.length ? samePhase : tiers;
+    const exact = pool.filter(tier => tier.kw === systemSize);
+    let candidates = exact;
+    if (!candidates.length) {
+        const closestKw = pool.slice().sort((a, b) => (
+            Math.abs(a.kw - systemSize) - Math.abs(b.kw - systemSize) || (a.mppt || 0) - (b.mppt || 0)
+        ))[0];
+        if (closestKw) candidates = pool.filter(tier => tier.kw === closestKw.kw);
+    }
+    return candidates.slice().sort((a, b) => (a.mppt || 0) - (b.mppt || 0) || String(a.key).localeCompare(String(b.key)))[0];
+}
+
 function fillStandardInverterOptions() {
     const select = document.getElementById('inverterCapacityKit');
     const hidden = document.getElementById('inverterCapacity');
@@ -604,7 +619,7 @@ function fillStandardInverterOptions() {
     if (!select || isKitBrand(document.getElementById('panelBrand').value)) return;
 
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 3;
-    const previousKey = (keyInput && keyInput.value) || select.value;
+    const phaseKey = normalizePhase(document.getElementById('phaseType').value);
     const previousKw = hidden ? parseFloat(hidden.value) : NaN;
     const tiers = listBrandInverterTiers();
     const kitSkuInput = document.getElementById('kitSku');
@@ -636,13 +651,7 @@ function fillStandardInverterOptions() {
         select.appendChild(option);
     });
 
-    const keep = previousKey ? tiers.find(tier => tier.key === previousKey) : null;
-    const exact = Number.isFinite(previousKw) ? tiers.find(tier => tier.kw === previousKw) : null;
-    const targetKw = Number.isFinite(previousKw) ? previousKw : systemSize;
-    const closest = tiers.slice().sort((a, b) => (
-        Math.abs(a.kw - targetKw) - Math.abs(b.kw - targetKw)
-    ))[0];
-    const chosen = keep || exact || closest;
+    const chosen = defaultInverterTier(tiers, systemSize, phaseKey) || tiers[0];
     select.value = chosen.key;
     applySelectedInverterTier();
 }
@@ -1343,6 +1352,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!isKitBrand(document.getElementById('panelBrand').value)) {
                 updatePanelCapacityByType();
+                fillStandardInverterOptions();
             } else {
                 updatePanelCount();
             }
@@ -1442,6 +1452,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (phaseTypeSelect) {
         phaseTypeSelect.addEventListener('change', function() {
             if (isKitBrand(document.getElementById('panelBrand').value)) updateKitMode();
+            else fillStandardInverterOptions();
         });
     }
 
@@ -1555,7 +1566,7 @@ function getInverterPrice(inverterConfig, capacityKW, phaseType, tierKey) {
         }
         
         // Sort by kW ascending
-        matchingTiers.sort((a, b) => a.kw - b.kw);
+        matchingTiers.sort((a, b) => a.kw - b.kw || (a.mppt || 0) - (b.mppt || 0));
         
         // Find exact match first
         const exactMatch = matchingTiers.find(t => t.kw === capacityKW);
