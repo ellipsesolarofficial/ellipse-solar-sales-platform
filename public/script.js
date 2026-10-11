@@ -875,7 +875,9 @@ function updatePanelCapacityByType() {
     const panelCapacitySelect = document.getElementById('panelCapacity');
     const { capacities, defaultCapacity } = getBrandCapacityConfig(panelBrand, panelType);
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 0;
-    const sizeAwareDefault = bestWattageForSize(capacities, systemSize) || defaultCapacity;
+    const sizeAwareDefault = panelBrand === 'waree' && capacities.includes(defaultCapacity)
+        ? defaultCapacity
+        : (bestWattageForSize(capacities, systemSize) || defaultCapacity);
     
     panelCapacitySelect.innerHTML = '';
     
@@ -1645,7 +1647,9 @@ function calculateQuotation(params) {
     const numSystemSize = parseFloat(systemSize) || 0;
     const { capacities: brandCapacities, defaultCapacity: brandDefaultCapacity } = getBrandCapacityConfig(panelBrand, panelType);
     const parsedCapacity = parseInt(panelCapacity, 10);
-    const sizeAwareDefault = bestWattageForSize(brandCapacities, numSystemSize) || brandDefaultCapacity;
+    const sizeAwareDefault = panelBrand === 'waree' && brandCapacities.includes(brandDefaultCapacity)
+        ? brandDefaultCapacity
+        : (bestWattageForSize(brandCapacities, numSystemSize) || brandDefaultCapacity);
     const numPanelCapacity = brandCapacities.includes(parsedCapacity) ? parsedCapacity : sizeAwareDefault;
     const numInverterCapacity = parseFloat(inverterCapacity) || numSystemSize;
     const numCommission = parseFloat(commission) || 0;
