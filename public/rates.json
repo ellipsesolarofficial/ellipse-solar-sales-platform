@@ -102,7 +102,7 @@
       },
       "topcon": {
         "dcr": {
-          "pricePerWatt": 27
+          "pricePerWatt": 26.5
         },
         "nonDcr": {
           "pricePerWatt": 13.5
