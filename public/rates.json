@@ -87,7 +87,7 @@
       "name": "Adani",
       "monoperc": {
         "dcr": {
-          "pricePerWatt": 23.5
+          "pricePerWatt": 23.25
         },
         "nonDcr": {
           "pricePerWatt": 14.7
@@ -102,10 +102,10 @@
       },
       "topcon": {
         "dcr": {
-          "pricePerWatt": 26.5
+          "pricePerWatt": 26.75
         },
         "nonDcr": {
-          "pricePerWatt": 13.5
+          "pricePerWatt": 13.4
         },
         "capacities": [
           610,
@@ -172,7 +172,7 @@
       "name": "Waaree",
       "monoperc": {
         "dcr": {
-          "pricePerWatt": 28
+          "pricePerWatt": 26
         },
         "nonDcr": {
           "pricePerWatt": 14.7
@@ -186,10 +186,10 @@
       },
       "topcon": {
         "dcr": {
-          "pricePerWatt": 29
+          "pricePerWatt": 26
         },
         "nonDcr": {
-          "pricePerWatt": 14
+          "pricePerWatt": 13.5
         },
         "capacities": [
           570,
@@ -197,6 +197,7 @@
           580,
           590,
           600,
+          605,
           610,
           615,
           620
