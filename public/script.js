@@ -215,9 +215,12 @@ function applyRecommendation(kw) {
 }
 
 // Loan & Subsidy Calculator
+// Subsidy is credited into the loan account, so EMI runs on (loan taken − subsidy).
+// A loan up to ₹2 lakhs is 5.75%. Anything above ₹2 lakhs is about 9%.
 const loanConfig = {
     maxLoanAmount: 200000,
-    interestRate: 5.75, // annual %
+    cappedInterestRate: 5.75,
+    fullLoanInterestRate: 9,
     loanTenureMonths: 120, // 10 years default
     centerSubsidy: { 1: 30000, 2: 60000, '3+': 78000 },
     stateSubsidy: 17000,
@@ -227,7 +230,13 @@ const loanConfig = {
     govtBuybackRate: 3.26   // govt buys exported units at ₹3.26/unit
 };
 
-function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption) {
+let lastQuotedFinalAmount = null;
+
+function formatRate(rate) {
+    return rate % 1 === 0 ? String(rate) : String(rate);
+}
+
+function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType) {
     // Calculate center subsidy
     let centerSubsidy = 0;
     if (systemSize >= 3) {
@@ -241,20 +250,30 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
     // State subsidy
     const stateSubsidy = availStateSubsidy ? loanConfig.stateSubsidy : 0;
     
-    // Total subsidy
+    // Total subsidy credited into the loan account
     const totalSubsidy = centerSubsidy + stateSubsidy;
+    const systemCost = Math.round(finalAmount);
+    const fullLoan = loanType === 'full';
+
+    // Loan is taken on the system price. The ₹2 lakh option caps it so the rate stays 5.75%.
+    const sanctionedLoan = fullLoan ? systemCost : Math.min(systemCost, loanConfig.maxLoanAmount);
+    const upfrontCash = systemCost - sanctionedLoan;
+    const subsidyApplied = Math.min(totalSubsidy, sanctionedLoan);
+    const emiPrincipal = sanctionedLoan - subsidyApplied;
+    const interestRate = sanctionedLoan > loanConfig.maxLoanAmount
+        ? loanConfig.fullLoanInterestRate
+        : loanConfig.cappedInterestRate;
     
-    // Amount after subsidy (loan amount needed)
-    const amountAfterSubsidy = finalAmount - totalSubsidy;
-    const loanAmount = Math.min(amountAfterSubsidy, loanConfig.maxLoanAmount);
-    const outOfPocket = Math.max(0, amountAfterSubsidy - loanConfig.maxLoanAmount);
-    
-    // EMI calculation (reducing balance)
-    const monthlyRate = loanConfig.interestRate / 100 / 12;
+    // EMI on the balance left after subsidy is credited (reducing balance)
+    const monthlyRate = interestRate / 100 / 12;
     const tenure = loanConfig.loanTenureMonths;
-    const emi = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1);
+    const rawEmi = emiPrincipal > 0
+        ? emiPrincipal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1)
+        : 0;
+    const emi = Math.round(rawEmi);
     const totalPayable = emi * tenure;
-    const totalInterest = totalPayable - loanAmount;
+    const totalInterest = totalPayable - emiPrincipal;
+    const totalFromPocket = upfrontCash + totalPayable;
     
     // Monthly savings from solar
     const monthlyUnitsGenerated = systemSize * loanConfig.unitsPerKWPerDay * 30;
@@ -268,33 +287,37 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
     // Effective EMI = EMI - money from selling excess units
     const effectiveCost = emi - monthlyGovtBuyback;
     
-    const monthlySaving = 0; // not used in this logic
-    const totalMonthlyBenefit = monthlyGovtBuyback;
-    
-    // Payback period = principal paid off by (bill saved + govt buyback) per month
-    // Bill saved = customer's monthly bill amount (they no longer pay it)
-    // Govt buyback = excess units sold
+    // Payback uses what the customer actually funds: upfront cash + loan balance after subsidy
     const monthlyBillSaved = monthlyConsumption * loanConfig.avgElectricityRate;
     const monthlyTotalReturn = monthlyBillSaved + monthlyGovtBuyback;
-    const paybackMonths = Math.ceil(amountAfterSubsidy / (monthlyTotalReturn || 1));
+    const customerPrincipal = upfrontCash + emiPrincipal;
+    const paybackMonths = monthlyTotalReturn > 0 ? Math.ceil(customerPrincipal / monthlyTotalReturn) : 0;
     const paybackYears = (paybackMonths / 12).toFixed(1);
     
-    // 30-year savings (bill saved + govt buyback over 30 years, minus principal)
+    // 30-year savings minus everything paid from pocket (upfront + all EMIs)
     const totalSavings30Years = monthlyTotalReturn * 12 * loanConfig.systemLifeYears;
-    const netSavings30Years = totalSavings30Years - totalPayable - outOfPocket;
+    const netSavings30Years = totalSavings30Years - totalFromPocket;
     
     return {
-        systemCost: finalAmount,
+        systemCost,
         centerSubsidy,
         stateSubsidy,
         totalSubsidy,
-        amountAfterSubsidy,
-        loanAmount,
-        outOfPocket,
-        emi: Math.round(emi),
-        totalPayable: Math.round(totalPayable),
-        totalInterest: Math.round(totalInterest),
-        monthlySaving: Math.round(monthlySaving),
+        subsidyApplied,
+        loanType: fullLoan ? 'full' : 'upto2l',
+        loanTypeLabel: fullLoan ? 'Full Loan' : 'Loan up to ₹2 Lakhs',
+        sanctionedLoan,
+        upfrontCash,
+        emiPrincipal,
+        loanAmount: emiPrincipal,
+        interestRate,
+        amountAfterSubsidy: customerPrincipal,
+        outOfPocket: upfrontCash,
+        emi,
+        totalPayable,
+        totalInterest,
+        totalFromPocket,
+        monthlySaving: 0,
         monthlyGovtBuyback: Math.round(monthlyGovtBuyback),
         effectiveCost: Math.round(effectiveCost),
         monthlyUnitsGenerated: Math.round(monthlyUnitsGenerated),
@@ -304,7 +327,7 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
         paybackYears,
         totalSavings30Years: Math.round(totalSavings30Years),
         netSavings30Years: Math.round(netSavings30Years),
-        exceedsLimit: amountAfterSubsidy > loanConfig.maxLoanAmount
+        exceedsLimit: upfrontCash > 0
     };
 }
 
@@ -338,15 +361,53 @@ function renderLoanChart(loanData) {
     return chartHTML;
 }
 
+function loanHowItWorks(loanData) {
+    const rate = formatRate(loanData.interestRate);
+    const subsidy = formatCurrency(loanData.subsidyApplied);
+    const balance = formatCurrency(loanData.emiPrincipal);
+    if (loanData.interestRate > loanConfig.cappedInterestRate) {
+        return `Full loan of ${formatCurrency(loanData.sanctionedLoan)} is above ₹2 lakhs, so the rate is ${rate}%. Subsidy of ${subsidy} is credited into this loan. EMI is on the ${balance} left. Nothing is paid upfront.`;
+    }
+    if (loanData.loanType === 'full') {
+        return `The full system price is within ₹2 lakhs, so the rate stays ${rate}%. Subsidy of ${subsidy} is credited into the loan. EMI is on ${balance}.`;
+    }
+    if (loanData.upfrontCash > 0) {
+        return `Loan is capped at ${formatCurrency(loanData.sanctionedLoan)} so the rate stays ${rate}%. Subsidy of ${subsidy} is credited into the loan, which leaves ${balance} for EMI. The remaining ${formatCurrency(loanData.upfrontCash)} is paid upfront in cash.`;
+    }
+    return `The system price is within ₹2 lakhs, so the whole amount is on the ${rate}% loan. Subsidy of ${subsidy} is credited into the loan. EMI is on ${balance}. Nothing extra is paid upfront.`;
+}
+
+function renderQuotePocketSummary(loanData, availLoan) {
+    const pocketEl = document.getElementById('quotePocketSummary');
+    const subtitleEl = document.getElementById('quoteFinalAmountSubtitle');
+    if (subtitleEl) subtitleEl.textContent = 'System price, GST included';
+    if (!pocketEl) return;
+    if (availLoan !== 'yes' || !loanData) {
+        pocketEl.style.display = 'none';
+        pocketEl.innerHTML = '';
+        return;
+    }
+    const years = loanConfig.loanTenureMonths / 12;
+    pocketEl.style.display = 'grid';
+    pocketEl.innerHTML = `
+        <div class="summary-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
+        <div class="summary-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
+        <div class="summary-pocket-note">${loanData.loanTypeLabel} · ${formatCurrency(loanData.emiPrincipal)} left after ${formatCurrency(loanData.subsidyApplied)} subsidy · ${formatRate(loanData.interestRate)}% for ${years} years</div>
+    `;
+}
+
 function showLoanDetails(finalAmount) {
     const availLoan = document.getElementById('availLoan').value;
     const availStateSubsidy = document.getElementById('availStateSubsidy').value === 'yes';
     const loanDuration = parseInt(document.getElementById('loanDuration').value) || 10;
+    const loanType = (document.getElementById('loanType') || {}).value || 'upto2l';
     const loanDetailsDiv = document.getElementById('loanDetails');
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 3;
+    lastQuotedFinalAmount = finalAmount;
     
     if (availLoan !== 'yes') {
         loanDetailsDiv.style.display = 'none';
+        renderQuotePocketSummary(null, 'no');
         return;
     }
     
@@ -356,32 +417,59 @@ function showLoanDetails(finalAmount) {
     const monthlyConsumption = monthlyBill > 0 ? calculateUnitsFromBill(monthlyBill, freeUnits) : 0;
     
     loanConfig.loanTenureMonths = loanDuration * 12;
-    const loanData = calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption);
+    const loanData = calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType);
+    const years = loanConfig.loanTenureMonths / 12;
+    const pocketNote = loanData.upfrontCash > 0
+        ? `${formatCurrency(loanData.upfrontCash)} now + ${formatCurrency(loanData.totalPayable)} over ${years} years, including ${formatCurrency(loanData.totalInterest)} interest`
+        : `All of it is EMI over ${years} years, including ${formatCurrency(loanData.totalInterest)} interest`;
+    const govtCoversEmi = loanData.effectiveCost < 0;
+    const netMonthlyLabel = govtCoversEmi
+        ? 'Left after EMI (govt money − EMI)'
+        : 'You actually pay (EMI − govt money)';
+    const netMonthlyValue = govtCoversEmi
+        ? `${formatCurrency(Math.abs(loanData.effectiveCost))}/month comes back`
+        : `${formatCurrency(loanData.effectiveCost)}/month`;
     
     let summaryHTML = `
+        <div class="loan-pocket">
+            <h4>Customer pays from pocket</h4>
+            <div class="loan-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
+            <div class="loan-pocket-note">${loanData.upfrontCash > 0 ? 'Cash. This part is not on the loan.' : 'No cash upfront. The whole balance stays on the loan.'}</div>
+            <div class="loan-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
+            <div class="loan-pocket-note">${years} years · ${formatCurrency(loanData.emiPrincipal)} left after subsidy · ${formatRate(loanData.interestRate)}%</div>
+            <div class="loan-pocket-row total"><span>Total from pocket</span><strong>${formatCurrency(loanData.totalFromPocket)}</strong></div>
+            <div class="loan-pocket-note" style="margin-bottom: 0;">${pocketNote}</div>
+        </div>
+        <div class="loan-how">${loanHowItWorks(loanData)}</div>
         <table style="width: 100%; font-size: 0.9em; border-collapse: collapse;">
-            <tr><td style="padding: 4px 0;">System Cost:</td><td style="text-align: right; font-weight: 600;">₹${loanData.systemCost.toLocaleString('en-IN')}</td></tr>
-            <tr><td style="padding: 4px 0;">Center Subsidy:</td><td style="text-align: right; color: green;">- ₹${loanData.centerSubsidy.toLocaleString('en-IN')}</td></tr>
-            ${loanData.stateSubsidy > 0 ? `<tr><td style="padding: 4px 0;">State Subsidy:</td><td style="text-align: right; color: green;">- ₹${loanData.stateSubsidy.toLocaleString('en-IN')}</td></tr>` : ''}
-            <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0; font-weight: 600;">Amount After Subsidy:</td><td style="text-align: right; font-weight: 600;">₹${loanData.amountAfterSubsidy.toLocaleString('en-IN')}</td></tr>
-            ${loanData.exceedsLimit ? `<tr><td style="padding: 4px 0; color: #e74c3c;">⚠️ Exceeds ₹2L loan limit:</td><td style="text-align: right; color: #e74c3c; font-weight: 600;">₹${loanData.outOfPocket.toLocaleString('en-IN')} out-of-pocket</td></tr>` : ''}
-            <tr><td style="padding: 4px 0;">Loan Amount:</td><td style="text-align: right;">₹${loanData.loanAmount.toLocaleString('en-IN')}</td></tr>
-            <tr><td style="padding: 4px 0;">EMI (${loanConfig.loanTenureMonths} months @ ${loanConfig.interestRate}%):</td><td style="text-align: right; font-weight: 600; color: #e67e22;">₹${loanData.emi.toLocaleString('en-IN')}/month</td></tr>
-            <tr><td style="padding: 4px 0;">Total Interest:</td><td style="text-align: right;">₹${loanData.totalInterest.toLocaleString('en-IN')}</td></tr>
-            <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0;">Units Generated/month:</td><td style="text-align: right;">${loanData.monthlyUnitsGenerated} units</td></tr>
-            <tr><td style="padding: 4px 0;">Units Used by Customer:</td><td style="text-align: right;">${loanData.monthlyConsumption} units</td></tr>
-            <tr><td style="padding: 4px 0;">Excess Units Sold to Govt:</td><td style="text-align: right; color: #00895e;">${loanData.leftoverUnits} units</td></tr>
-            <tr><td style="padding: 4px 0;">Money from Govt (₹3.26/unit):</td><td style="text-align: right; color: #00895e; font-weight: 600;">₹${loanData.monthlyGovtBuyback.toLocaleString('en-IN')}/month</td></tr>
-            <tr><td style="padding: 4px 0;">EMI:</td><td style="text-align: right; color: #e67e22;">₹${loanData.emi.toLocaleString('en-IN')}/month</td></tr>
-            <tr style="border-top: 1px solid #ccc; background: #fff5f0;"><td style="padding: 6px 0; font-weight: 600;">You Actually Pay (EMI - Govt Money):</td><td style="text-align: right; font-weight: 700; font-size: 1.1em; color: #e67e22;">₹${loanData.effectiveCost.toLocaleString('en-IN')}/month</td></tr>
-            <tr><td style="padding: 4px 0;">Payback Period:</td><td style="text-align: right; font-weight: 600;">${loanData.paybackYears} years</td></tr>
-            <tr><td style="padding: 4px 0;">30-Year Net Savings:</td><td style="text-align: right; color: #00895e; font-weight: 600;">₹${loanData.netSavings30Years.toLocaleString('en-IN')}</td></tr>
+            <tr><td style="padding: 4px 0;">System cost</td><td style="text-align: right; font-weight: 600;">${formatCurrency(loanData.systemCost)}</td></tr>
+            <tr><td style="padding: 4px 0;">Loan taken (${loanData.loanTypeLabel})</td><td style="text-align: right;">${formatCurrency(loanData.sanctionedLoan)}</td></tr>
+            <tr><td style="padding: 4px 0;">Center subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.centerSubsidy)}</td></tr>
+            ${loanData.stateSubsidy > 0 ? `<tr><td style="padding: 4px 0;">State subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.stateSubsidy)}</td></tr>` : ''}
+            <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0; font-weight: 600;">Balance for EMI</td><td style="text-align: right; font-weight: 600;">${formatCurrency(loanData.emiPrincipal)}</td></tr>
+            <tr><td style="padding: 4px 0;">Interest rate</td><td style="text-align: right;">${formatRate(loanData.interestRate)}%</td></tr>
+            <tr><td style="padding: 4px 0;">EMI (${loanConfig.loanTenureMonths} months)</td><td style="text-align: right; font-weight: 600; color: #e67e22;">${formatCurrency(loanData.emi)}/month</td></tr>
+            <tr><td style="padding: 4px 0;">Interest over ${years} years</td><td style="text-align: right;">${formatCurrency(loanData.totalInterest)}</td></tr>
+            <tr><td style="padding: 4px 0; font-weight: 600;">Pay now (cash)</td><td style="text-align: right; font-weight: 700; color: #c0392b;">${formatCurrency(loanData.upfrontCash)}</td></tr>
+            <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0;">Units generated/month</td><td style="text-align: right;">${loanData.monthlyUnitsGenerated} units</td></tr>
+            <tr><td style="padding: 4px 0;">Units used by customer</td><td style="text-align: right;">${loanData.monthlyConsumption} units</td></tr>
+            <tr><td style="padding: 4px 0;">Excess units sold to govt</td><td style="text-align: right; color: #00895e;">${loanData.leftoverUnits} units</td></tr>
+            <tr><td style="padding: 4px 0;">Money from govt (₹3.26/unit)</td><td style="text-align: right; color: #00895e; font-weight: 600;">${formatCurrency(loanData.monthlyGovtBuyback)}/month</td></tr>
+            <tr style="border-top: 1px solid #ccc; background: ${govtCoversEmi ? '#f0fff4' : '#fff5f0'};"><td style="padding: 6px 0; font-weight: 600;">${netMonthlyLabel}</td><td style="text-align: right; font-weight: 700; font-size: 1.1em; color: ${govtCoversEmi ? '#00895e' : '#e67e22'};">${netMonthlyValue}</td></tr>
+            <tr><td style="padding: 4px 0;">Payback period</td><td style="text-align: right; font-weight: 600;">${loanData.paybackYears} years</td></tr>
+            <tr><td style="padding: 4px 0;">30-year net savings</td><td style="text-align: right; color: #00895e; font-weight: 600;">${formatCurrency(loanData.netSavings30Years)}</td></tr>
         </table>
     `;
     
     document.getElementById('loanSummaryContent').innerHTML = summaryHTML;
     document.getElementById('loanChart').innerHTML = renderLoanChart(loanData);
+    renderQuotePocketSummary(loanData, 'yes');
     loanDetailsDiv.style.display = 'block';
+}
+
+function refreshLoanDetails() {
+    if (lastQuotedFinalAmount == null) return;
+    showLoanDetails(lastQuotedFinalAmount);
 }
 
 // Available wattages for the selected brand + panel technology
@@ -1496,15 +1584,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Loan section listeners
-    const availLoanSelect = document.getElementById('availLoan');
-    const availStateSubsidySelect = document.getElementById('availStateSubsidy');
-    if (availLoanSelect) {
-        availLoanSelect.addEventListener('change', function() {
-            if (this.value === 'no') {
-                document.getElementById('loanDetails').style.display = 'none';
-            }
-        });
-    }
+    ['availLoan', 'loanType', 'loanDuration', 'availStateSubsidy'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', refreshLoanDetails);
+    });
 });
 
 // Fixed profit for this brand + system size. The table value is used as-is.
@@ -2883,6 +2967,7 @@ form.addEventListener('submit', (e) => {
     try {
         const quotation = calculateQuotation(params);
         displayQuotation({ quotation });
+        showLoanDetails(quotation.breakdown.finalAmount);
         
         // Log to Google Sheets for tracking (do this first, before PDF which might fail)
         logToGoogleSheets(quotation, phoneNumber, salesperson);

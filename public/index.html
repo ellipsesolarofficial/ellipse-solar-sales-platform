@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ellipse Solar - Sales Portal</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=loan-types">
     <!-- jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -439,6 +439,15 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="loanType">Loan Type</label>
+                            <select id="loanType" name="loanType">
+                                <option value="upto2l" selected>Loan up to ₹2 Lakhs</option>
+                                <option value="full">Full Loan</option>
+                            </select>
+                            <small>Up to ₹2 lakhs is 5.75%. A full loan above ₹2 lakhs is about 9%. Subsidy is cut from the loan before EMI. Anything above the ₹2 lakh loan is paid upfront in cash.</small>
+                        </div>
+
+                        <div class="form-group">
                             <label for="loanDuration">Loan Duration (Years)</label>
                             <select id="loanDuration" name="loanDuration">
                                 <option value="3">3 Years</option>
@@ -483,7 +492,8 @@
                 <div class="summary-card">
                     <h3>Final Amount</h3>
                     <div class="amount" id="quoteFinalAmountSummary">₹0</div>
-                    <div class="subtitle">After subsidy & taxes</div>
+                    <div class="subtitle" id="quoteFinalAmountSubtitle">System price, GST included</div>
+                    <div id="quotePocketSummary" class="summary-pocket" style="display: none;"></div>
                 </div>
                 
                 <h2>Quotation Summary</h2>
@@ -555,6 +565,6 @@
         </footer>
     </div>
 
-    <script src="script.js?v=waree-605-default"></script>
+    <script src="script.js?v=loan-pocket"></script>
 </body>
 </html>

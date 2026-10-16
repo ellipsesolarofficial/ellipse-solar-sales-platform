@@ -305,6 +305,79 @@ main {
     opacity: 0.9;
 }
 
+.summary-pocket {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.35);
+    display: grid;
+    gap: 6px;
+}
+
+.summary-pocket-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.summary-pocket-row strong {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.summary-pocket-note {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    opacity: 0.92;
+}
+
+.loan-pocket {
+    background: #fff;
+    border: 1px solid #c5dff5;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.loan-pocket h4 {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    color: #0055aa;
+}
+
+.loan-pocket-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 4px 0;
+}
+
+.loan-pocket-row.total {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid #d5e6f5;
+    font-weight: 700;
+}
+
+.loan-pocket-note {
+    font-size: 0.8rem;
+    color: #555;
+    line-height: 1.4;
+    margin: 2px 0 8px;
+}
+
+.loan-how {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: #333;
+    background: #fff;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+
 /* Quote Card */
 .quote-card {
     background: var(--bg-white);
