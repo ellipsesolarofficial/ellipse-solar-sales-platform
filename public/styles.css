@@ -48,6 +48,19 @@ header {
     box-shadow: 0 2px 4px rgba(0,0,0,0.04);
     margin-bottom: 0;
     border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.portal-version {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-light);
+    line-height: 1;
 }
 
 .logo {

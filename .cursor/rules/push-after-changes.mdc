@@ -1,5 +1,5 @@
 ---
-description: Commit and push to GitHub after every requested change
+description: Commit, push, and live-test on Netlify after every requested change
 alwaysApply: true
 ---
 
@@ -11,4 +11,20 @@ When the user asks for any code, rates, or portal change, finish by committing t
 - Do not include `.env`, credentials, or unrelated untracked files.
 - Do not include `.cursor/` unless the change is a rule they asked for.
 - Use a short commit message that says why the change was made.
-- After push, mention that Netlify will pick up `main`.
+
+## Portal version
+
+The number in the top-right of the page is the text inside `.portal-version` in `public/index.html` (for example `1.11`).
+
+On every code, rates, or portal change, before committing:
+
+1. Raise that number by 0.01 (`1.11` becomes `1.12`). Do not skip or reuse a number.
+2. After the push, tell the user the version on its own line: `Latest version: 1.12`.
+3. Confirm the live page shows that same number in the top right before saying the push is done.
+
+After a successful push to `main`:
+
+1. Open https://ellipsesolarofficial.github.io/ellipse-solar-sales-platform/ in the browser.
+2. Wait until the top-right version matches the number just pushed, not the previous deploy.
+3. Exercise the change end to end the way a salesperson would: set the same inputs that were just coded, click Calculate Estimate, and confirm the quotation/BOM/price is correct.
+4. If the live site is stale, wait and re-check. If the live behavior is wrong, fix, push, and re-test.
