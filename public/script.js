@@ -221,6 +221,7 @@ const loanConfig = {
     maxLoanAmount: 200000,
     cappedInterestRate: 5.75,
     fullLoanInterestRate: 9,
+    privateFinanceRate: 9,
     loanTenureMonths: 120, // 10 years default
     centerSubsidy: { 1: 30000, 2: 60000, '3+': 78000 },
     stateSubsidy: 17000,
@@ -270,27 +271,39 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
     // Total subsidy credited into the loan account
     const totalSubsidy = centerSubsidy + stateSubsidy;
     const systemCost = Math.round(finalAmount);
-    const fullLoan = loanType === 'full';
+    const privateFinance = loanType === 'private';
+    const coversFullPrice = loanType === 'full' || privateFinance;
 
     // Loan is taken on the system price. The ₹2 lakh option caps it so the rate stays 5.75%.
-    const sanctionedLoan = fullLoan ? systemCost : Math.min(systemCost, loanConfig.maxLoanAmount);
+    // Private finance covers the full price at a flat rate.
+    const sanctionedLoan = coversFullPrice ? systemCost : Math.min(systemCost, loanConfig.maxLoanAmount);
     const upfrontCash = systemCost - sanctionedLoan;
     const subsidyApplied = Math.min(totalSubsidy, sanctionedLoan);
     const emiPrincipal = sanctionedLoan - subsidyApplied;
-    const interestRate = sanctionedLoan > loanConfig.maxLoanAmount
-        ? loanConfig.fullLoanInterestRate
-        : loanConfig.cappedInterestRate;
+    const rateStyle = privateFinance ? 'flat' : 'reducing';
+    const interestRate = privateFinance
+        ? loanConfig.privateFinanceRate
+        : (sanctionedLoan > loanConfig.maxLoanAmount
+            ? loanConfig.fullLoanInterestRate
+            : loanConfig.cappedInterestRate);
     
-    // EMI on the balance left after subsidy is credited (reducing balance)
-    const monthlyRate = interestRate / 100 / 12;
+    // EMI on the balance left after subsidy is credited.
+    // Private finance uses 9% flat: interest = principal × 9% × years.
     const tenure = loanConfig.loanTenureMonths;
-    const rawEmi = emiPrincipal > 0
-        ? emiPrincipal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1)
-        : 0;
-    const emi = Math.round(rawEmi);
+    let emi = 0;
+    if (emiPrincipal > 0 && rateStyle === 'flat') {
+        const years = tenure / 12;
+        const exactTotal = emiPrincipal + emiPrincipal * (interestRate / 100) * years;
+        emi = Math.round(exactTotal / tenure);
+    } else if (emiPrincipal > 0) {
+        const monthlyRate = interestRate / 100 / 12;
+        const rawEmi = emiPrincipal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1);
+        emi = Math.round(rawEmi);
+    }
     const totalPayable = emi * tenure;
     const totalInterest = totalPayable - emiPrincipal;
-    const totalFromPocket = upfrontCash + totalPayable;
+    // Pocket total is cash now plus the loan balance. Interest is not added here.
+    const totalFromPocket = upfrontCash + emiPrincipal;
     
     // Monthly savings from solar
     const monthlyUnitsGenerated = systemSize * loanConfig.unitsPerKWPerDay * 30;
@@ -311,9 +324,9 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
     const paybackMonths = monthlyTotalReturn > 0 ? Math.ceil(customerPrincipal / monthlyTotalReturn) : 0;
     const paybackYears = (paybackMonths / 12).toFixed(1);
     
-    // 30-year savings minus everything paid from pocket (upfront + all EMIs)
+    // 30-year savings minus cash paid now and every EMI, which includes interest
     const totalSavings30Years = monthlyTotalReturn * 12 * loanConfig.systemLifeYears;
-    const netSavings30Years = totalSavings30Years - totalFromPocket;
+    const netSavings30Years = totalSavings30Years - upfrontCash - totalPayable;
     
     return {
         systemCost,
@@ -321,8 +334,9 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
         stateSubsidy,
         totalSubsidy,
         subsidyApplied,
-        loanType: fullLoan ? 'full' : 'upto2l',
-        loanTypeLabel: fullLoan ? 'Full Loan' : 'Loan up to ₹2 Lakhs',
+        loanType: privateFinance ? 'private' : (loanType === 'full' ? 'full' : 'upto2l'),
+        loanTypeLabel: privateFinance ? 'Private Finance' : (loanType === 'full' ? 'Full Loan' : 'Loan up to ₹2 Lakhs'),
+        rateStyle,
         sanctionedLoan,
         upfrontCash,
         emiPrincipal,
@@ -379,10 +393,24 @@ function renderLoanChart(loanData) {
     return chartHTML;
 }
 
+function formatLoanRate(loanData) {
+    const rate = formatRate(loanData.interestRate);
+    return loanData.rateStyle === 'flat' ? `${rate}% flat` : `${rate}%`;
+}
+
 function loanHowItWorks(loanData) {
     const rate = formatRate(loanData.interestRate);
     const subsidy = formatCurrency(loanData.subsidyApplied);
     const balance = formatCurrency(loanData.emiPrincipal);
+    if (loanData.loanType === 'private') {
+        const subsidyLine = loanData.subsidyApplied
+            ? `Subsidy of ${subsidy} is credited into the loan, so EMI is on ${balance}.`
+            : `Non-DCR panels get no subsidy, so EMI is on the full ${balance}.`;
+        const upfrontLine = loanData.upfrontCash > 0
+            ? ` The remaining ${formatCurrency(loanData.upfrontCash)} is paid upfront in cash.`
+            : ' Nothing is paid upfront.';
+        return `Private finance is ${formatLoanRate(loanData)} on the full system price. ${subsidyLine}${upfrontLine}`;
+    }
     if (!loanData.subsidyApplied) {
         if (loanData.interestRate > loanConfig.cappedInterestRate) {
             return `Full loan of ${formatCurrency(loanData.sanctionedLoan)} is above ₹2 lakhs, so the rate is ${rate}%. Non-DCR panels get no subsidy, so EMI is on the full ${balance}. Nothing is paid upfront.`;
@@ -422,7 +450,7 @@ function renderQuotePocketSummary(loanData, availLoan) {
     pocketEl.innerHTML = `
         <div class="summary-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
         <div class="summary-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
-        <div class="summary-pocket-note">${loanData.loanTypeLabel} · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after ${formatCurrency(loanData.subsidyApplied)} subsidy` : `${formatCurrency(loanData.emiPrincipal)} on the loan, no subsidy`} · ${formatRate(loanData.interestRate)}% for ${years} years</div>
+        <div class="summary-pocket-note">${loanData.loanTypeLabel} · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after ${formatCurrency(loanData.subsidyApplied)} subsidy` : `${formatCurrency(loanData.emiPrincipal)} on the loan, no subsidy`} · ${formatLoanRate(loanData)} for ${years} years</div>
     `;
 }
 
@@ -451,8 +479,8 @@ function showLoanDetails(finalAmount) {
     const loanData = calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible);
     const years = loanConfig.loanTenureMonths / 12;
     const pocketNote = loanData.upfrontCash > 0
-        ? `${formatCurrency(loanData.upfrontCash)} now + ${formatCurrency(loanData.totalPayable)} over ${years} years, including ${formatCurrency(loanData.totalInterest)} interest`
-        : `All of it is EMI over ${years} years, including ${formatCurrency(loanData.totalInterest)} interest`;
+        ? `${formatCurrency(loanData.upfrontCash)} cash now, plus ${formatCurrency(loanData.emiPrincipal)} left on the loan`
+        : `${formatCurrency(loanData.emiPrincipal)} left on the loan`;
     const govtCoversEmi = loanData.effectiveCost < 0;
     const netMonthlyLabel = govtCoversEmi
         ? 'Left after EMI (govt money − EMI)'
@@ -467,7 +495,7 @@ function showLoanDetails(finalAmount) {
             <div class="loan-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
             <div class="loan-pocket-note">${loanData.upfrontCash > 0 ? 'Cash. This part is not on the loan.' : 'No cash upfront. The whole balance stays on the loan.'}</div>
             <div class="loan-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
-            <div class="loan-pocket-note">${years} years · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after subsidy` : `EMI on ${formatCurrency(loanData.emiPrincipal)}, no subsidy`} · ${formatRate(loanData.interestRate)}%</div>
+            <div class="loan-pocket-note">${years} years · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after subsidy` : `EMI on ${formatCurrency(loanData.emiPrincipal)}, no subsidy`} · ${formatLoanRate(loanData)}</div>
             <div class="loan-pocket-row total"><span>Total from pocket</span><strong>${formatCurrency(loanData.totalFromPocket)}</strong></div>
             <div class="loan-pocket-note" style="margin-bottom: 0;">${pocketNote}</div>
         </div>
@@ -478,7 +506,7 @@ function showLoanDetails(finalAmount) {
             ${loanData.centerSubsidy > 0 ? `<tr><td style="padding: 4px 0;">Center subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.centerSubsidy)}</td></tr>` : ''}
             ${loanData.stateSubsidy > 0 ? `<tr><td style="padding: 4px 0;">State subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.stateSubsidy)}</td></tr>` : ''}
             <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0; font-weight: 600;">Balance for EMI</td><td style="text-align: right; font-weight: 600;">${formatCurrency(loanData.emiPrincipal)}</td></tr>
-            <tr><td style="padding: 4px 0;">Interest rate</td><td style="text-align: right;">${formatRate(loanData.interestRate)}%</td></tr>
+            <tr><td style="padding: 4px 0;">Interest rate</td><td style="text-align: right;">${formatLoanRate(loanData)}</td></tr>
             <tr><td style="padding: 4px 0;">EMI (${loanConfig.loanTenureMonths} months)</td><td style="text-align: right; font-weight: 600; color: #e67e22;">${formatCurrency(loanData.emi)}/month</td></tr>
             <tr><td style="padding: 4px 0;">Interest over ${years} years</td><td style="text-align: right;">${formatCurrency(loanData.totalInterest)}</td></tr>
             <tr><td style="padding: 4px 0; font-weight: 600;">Pay now (cash)</td><td style="text-align: right; font-weight: 700; color: #c0392b;">${formatCurrency(loanData.upfrontCash)}</td></tr>
@@ -2254,7 +2282,7 @@ function calculateQuotation(params) {
         batteryDetails,
         batteryInverterDetails,
         structureBrand: structureConfig.name,
-        siteType,
+        siteType: siteType || 'standard',
         numberOfFloors: numFloors,
         panelCount,
         panelConfig: adjustedPanelConfig,
