@@ -237,6 +237,66 @@ function formatRate(rate) {
     return rate % 1 === 0 ? String(rate) : String(rate);
 }
 
+function reducingEmi(principal, annualRate, months) {
+    if (principal <= 0 || months <= 0) return 0;
+    const monthlyRate = annualRate / 100 / 12;
+    if (monthlyRate === 0) return Math.round(principal / months);
+    const raw = principal * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
+    return Math.round(raw);
+}
+
+function flatEmi(principal, annualRate, months) {
+    if (principal <= 0 || months <= 0) return 0;
+    const years = months / 12;
+    const exactTotal = principal + principal * (annualRate / 100) * years;
+    return Math.round(exactTotal / months);
+}
+
+function reducingPayoff(principal, emi, annualRate) {
+    if (principal <= 0 || emi <= 0) return { months: 0, totalPaid: 0, totalInterest: 0 };
+    const monthlyRate = annualRate / 100 / 12;
+    let balance = principal;
+    let months = 0;
+    let totalPaid = 0;
+    while (balance > 1 && months < 600) {
+        const interest = balance * monthlyRate;
+        const payment = Math.min(emi, balance + interest);
+        balance = balance + interest - payment;
+        totalPaid += payment;
+        months += 1;
+        if (payment + 0.5 < emi) break;
+    }
+    return {
+        months,
+        totalPaid: Math.round(totalPaid),
+        totalInterest: Math.round(totalPaid - principal)
+    };
+}
+
+function flatPayoff(principal, emi, annualRate) {
+    if (principal <= 0 || emi <= 0) return { months: 0, totalPaid: 0, totalInterest: 0 };
+    const monthlyInterest = principal * (annualRate / 100) / 12;
+    const monthlyPrincipal = emi - monthlyInterest;
+    if (monthlyPrincipal <= 0) return { months: 0, totalPaid: 0, totalInterest: 0 };
+    const months = Math.ceil(principal / monthlyPrincipal);
+    const fullMonths = Math.max(0, months - 1);
+    const remainingPrincipal = Math.max(0, principal - monthlyPrincipal * fullMonths);
+    const lastPayment = remainingPrincipal + monthlyInterest;
+    const totalPaid = emi * fullMonths + lastPayment;
+    return {
+        months,
+        totalPaid: Math.round(totalPaid),
+        totalInterest: Math.round(totalPaid - principal)
+    };
+}
+
+function formatTenure(months) {
+    const years = Math.round((months / 12) * 10) / 10;
+    const yearLabel = years === 1 ? '1 year' : `${years} years`;
+    const monthLabel = months === 1 ? '1 month' : `${months} months`;
+    return `${yearLabel} (${monthLabel})`;
+}
+
 function isNonDcrOnly() {
     const category = document.getElementById('panelCategory');
     return !!(category && category.value === 'nonDcr');
@@ -254,7 +314,7 @@ function updateSubsidyEligibility() {
     }
 }
 
-function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible = true) {
+function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible = true, repayMode = 'sameEmi') {
     // Non-DCR panels are not eligible for central or state subsidy.
     let centerSubsidy = 0;
     if (subsidyEligible && systemSize >= 3) {
@@ -280,28 +340,37 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
     const upfrontCash = systemCost - sanctionedLoan;
     const subsidyApplied = Math.min(totalSubsidy, sanctionedLoan);
     const emiPrincipal = sanctionedLoan - subsidyApplied;
+    // Only private finance is flat. Every other loan type is reducing balance.
     const rateStyle = privateFinance ? 'flat' : 'reducing';
     const interestRate = privateFinance
         ? loanConfig.privateFinanceRate
         : (sanctionedLoan > loanConfig.maxLoanAmount
             ? loanConfig.fullLoanInterestRate
             : loanConfig.cappedInterestRate);
+    const emiAmount = (principal, months) => rateStyle === 'flat'
+        ? flatEmi(principal, interestRate, months)
+        : reducingEmi(principal, interestRate, months);
     
-    // EMI on the balance left after subsidy is credited.
-    // Private finance uses 9% flat: interest = principal × 9% × years.
-    const tenure = loanConfig.loanTenureMonths;
+    const selectedMonths = loanConfig.loanTenureMonths;
+    const keepEmi = repayMode !== 'lowerEmi' && subsidyApplied > 0;
     let emi = 0;
-    if (emiPrincipal > 0 && rateStyle === 'flat') {
-        const years = tenure / 12;
-        const exactTotal = emiPrincipal + emiPrincipal * (interestRate / 100) * years;
-        emi = Math.round(exactTotal / tenure);
+    let actualMonths = 0;
+    let totalPayable = 0;
+    let totalInterest = 0;
+    if (emiPrincipal > 0 && keepEmi) {
+        emi = emiAmount(sanctionedLoan, selectedMonths);
+        const paid = rateStyle === 'flat'
+            ? flatPayoff(emiPrincipal, emi, interestRate)
+            : reducingPayoff(emiPrincipal, emi, interestRate);
+        actualMonths = paid.months || selectedMonths;
+        totalPayable = paid.totalPaid;
+        totalInterest = paid.totalInterest;
     } else if (emiPrincipal > 0) {
-        const monthlyRate = interestRate / 100 / 12;
-        const rawEmi = emiPrincipal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1);
-        emi = Math.round(rawEmi);
+        emi = emiAmount(emiPrincipal, selectedMonths);
+        actualMonths = selectedMonths;
+        totalPayable = emi * actualMonths;
+        totalInterest = totalPayable - emiPrincipal;
     }
-    const totalPayable = emi * tenure;
-    const totalInterest = totalPayable - emiPrincipal;
     // Pocket total is cash now plus the loan balance. Interest is not added here.
     const totalFromPocket = upfrontCash + emiPrincipal;
     
@@ -337,6 +406,12 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
         loanType: privateFinance ? 'private' : (loanType === 'full' ? 'full' : 'upto2l'),
         loanTypeLabel: privateFinance ? 'Private Finance' : (loanType === 'full' ? 'Full Loan' : 'Loan up to ₹2 Lakhs'),
         rateStyle,
+        repayMode: keepEmi ? 'sameEmi' : 'lowerEmi',
+        repayModeLabel: subsidyApplied <= 0
+            ? 'No subsidy, so EMI and tenure stay as selected'
+            : (keepEmi ? 'Same EMI, shorter tenure' : 'Lower EMI, same tenure'),
+        selectedMonths,
+        actualMonths,
         sanctionedLoan,
         upfrontCash,
         emiPrincipal,
@@ -395,7 +470,7 @@ function renderLoanChart(loanData) {
 
 function formatLoanRate(loanData) {
     const rate = formatRate(loanData.interestRate);
-    return loanData.rateStyle === 'flat' ? `${rate}% flat` : `${rate}%`;
+    return loanData.rateStyle === 'flat' ? `${rate}% flat` : `${rate}% reducing`;
 }
 
 function loanHowItWorks(loanData) {
@@ -445,12 +520,14 @@ function renderQuotePocketSummary(loanData, availLoan) {
         pocketEl.innerHTML = '';
         return;
     }
-    const years = loanConfig.loanTenureMonths / 12;
+    const tenureText = loanData.repayMode === 'sameEmi' && loanData.actualMonths < loanData.selectedMonths
+        ? `${formatTenure(loanData.actualMonths)} instead of ${formatTenure(loanData.selectedMonths)}`
+        : formatTenure(loanData.actualMonths);
     pocketEl.style.display = 'grid';
     pocketEl.innerHTML = `
         <div class="summary-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
         <div class="summary-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
-        <div class="summary-pocket-note">${loanData.loanTypeLabel} · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after ${formatCurrency(loanData.subsidyApplied)} subsidy` : `${formatCurrency(loanData.emiPrincipal)} on the loan, no subsidy`} · ${formatLoanRate(loanData)} for ${years} years</div>
+        <div class="summary-pocket-note">${loanData.loanTypeLabel} · ${loanData.repayModeLabel} · ${tenureText} · ${formatLoanRate(loanData)}</div>
     `;
 }
 
@@ -460,6 +537,7 @@ function showLoanDetails(finalAmount) {
     const availStateSubsidy = subsidyEligible && document.getElementById('availStateSubsidy').value === 'yes';
     const loanDuration = parseInt(document.getElementById('loanDuration').value) || 10;
     const loanType = (document.getElementById('loanType') || {}).value || 'upto2l';
+    const repayMode = (document.getElementById('subsidyRepay') || {}).value || 'sameEmi';
     const loanDetailsDiv = document.getElementById('loanDetails');
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 3;
     lastQuotedFinalAmount = finalAmount;
@@ -476,8 +554,8 @@ function showLoanDetails(finalAmount) {
     const monthlyConsumption = monthlyBill > 0 ? calculateUnitsFromBill(monthlyBill, freeUnits) : 0;
     
     loanConfig.loanTenureMonths = loanDuration * 12;
-    const loanData = calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible);
-    const years = loanConfig.loanTenureMonths / 12;
+    const loanData = calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible, repayMode);
+    const years = (loanData.actualMonths / 12).toFixed(1);
     const pocketNote = loanData.upfrontCash > 0
         ? `${formatCurrency(loanData.upfrontCash)} cash now, plus ${formatCurrency(loanData.emiPrincipal)} left on the loan`
         : `${formatCurrency(loanData.emiPrincipal)} left on the loan`;
@@ -495,7 +573,7 @@ function showLoanDetails(finalAmount) {
             <div class="loan-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
             <div class="loan-pocket-note">${loanData.upfrontCash > 0 ? 'Cash. This part is not on the loan.' : 'No cash upfront. The whole balance stays on the loan.'}</div>
             <div class="loan-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
-            <div class="loan-pocket-note">${years} years · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after subsidy` : `EMI on ${formatCurrency(loanData.emiPrincipal)}, no subsidy`} · ${formatLoanRate(loanData)}</div>
+            <div class="loan-pocket-note">${loanData.actualMonths < loanData.selectedMonths ? `Same EMI · finishes in ${formatTenure(loanData.actualMonths)}, not ${formatTenure(loanData.selectedMonths)}` : loanData.subsidyApplied ? `Lower EMI · tenure stays ${formatTenure(loanData.actualMonths)}` : `Tenure stays ${formatTenure(loanData.actualMonths)}`} · ${formatLoanRate(loanData)}</div>
             <div class="loan-pocket-row total"><span>Total from pocket</span><strong>${formatCurrency(loanData.totalFromPocket)}</strong></div>
             <div class="loan-pocket-note" style="margin-bottom: 0;">${pocketNote}</div>
         </div>
@@ -507,7 +585,8 @@ function showLoanDetails(finalAmount) {
             ${loanData.stateSubsidy > 0 ? `<tr><td style="padding: 4px 0;">State subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.stateSubsidy)}</td></tr>` : ''}
             <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0; font-weight: 600;">Balance for EMI</td><td style="text-align: right; font-weight: 600;">${formatCurrency(loanData.emiPrincipal)}</td></tr>
             <tr><td style="padding: 4px 0;">Interest rate</td><td style="text-align: right;">${formatLoanRate(loanData)}</td></tr>
-            <tr><td style="padding: 4px 0;">EMI (${loanConfig.loanTenureMonths} months)</td><td style="text-align: right; font-weight: 600; color: #e67e22;">${formatCurrency(loanData.emi)}/month</td></tr>
+            <tr><td style="padding: 4px 0;">EMI (${loanData.actualMonths} months)</td><td style="text-align: right; font-weight: 600; color: #e67e22;">${formatCurrency(loanData.emi)}/month</td></tr>
+            <tr><td style="padding: 4px 0;">Tenure</td><td style="text-align: right;">${loanData.actualMonths < loanData.selectedMonths ? `${formatTenure(loanData.actualMonths)} (was ${formatTenure(loanData.selectedMonths)})` : formatTenure(loanData.actualMonths)}</td></tr>
             <tr><td style="padding: 4px 0;">Interest over ${years} years</td><td style="text-align: right;">${formatCurrency(loanData.totalInterest)}</td></tr>
             <tr><td style="padding: 4px 0; font-weight: 600;">Pay now (cash)</td><td style="text-align: right; font-weight: 700; color: #c0392b;">${formatCurrency(loanData.upfrontCash)}</td></tr>
             <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0;">Units generated/month</td><td style="text-align: right;">${loanData.monthlyUnitsGenerated} units</td></tr>
@@ -1645,7 +1724,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Loan section listeners
-    ['availLoan', 'loanType', 'loanDuration', 'availStateSubsidy'].forEach((id) => {
+    ['availLoan', 'loanType', 'subsidyRepay', 'loanDuration', 'availStateSubsidy'].forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('change', refreshLoanDetails);

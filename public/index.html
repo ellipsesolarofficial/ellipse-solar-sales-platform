@@ -17,7 +17,7 @@
                     <h1 style="font-size: 1.1em;">Solar Installation Quotation Calculator</h1>
                 </div>
             </div>
-            <span class="portal-version" id="portalVersion">1.13</span>
+            <span class="portal-version" id="portalVersion">1.14</span>
         </header>
 
         <main>
@@ -436,11 +436,20 @@
                                 <option value="full">Full Loan</option>
                                 <option value="private">Private Finance</option>
                             </select>
-                            <small>Up to ₹2 lakhs is 5.75%. A full loan above ₹2 lakhs is about 9% reducing. Private finance is 9% flat on the full amount. Subsidy is cut from the loan before EMI. Anything above the ₹2 lakh loan is paid upfront in cash.</small>
+                            <small>Loan up to ₹2 lakhs and full loan use reducing balance. Private finance is the only flat rate, at 9%. Anything above the ₹2 lakh loan is paid upfront in cash.</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="loanDuration">Loan Duration (Years)</label>
+                            <label for="subsidyRepay">After Subsidy</label>
+                            <select id="subsidyRepay" name="subsidyRepay">
+                                <option value="sameEmi" selected>Same EMI, shorter tenure</option>
+                                <option value="lowerEmi">Lower EMI, same tenure</option>
+                            </select>
+                            <small>Default keeps the EMI of the original loan and finishes sooner once subsidy is credited. The other option keeps the tenure and reduces the EMI.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="loanDuration">Original Tenure (Years)</label>
                             <select id="loanDuration" name="loanDuration">
                                 <option value="3">3 Years</option>
                                 <option value="4">4 Years</option>
@@ -557,6 +566,6 @@
         </footer>
     </div>
 
-    <script src="script.js?v=1.13"></script>
+    <script src="script.js?v=1.14"></script>
 </body>
 </html>
