@@ -236,19 +236,36 @@ function formatRate(rate) {
     return rate % 1 === 0 ? String(rate) : String(rate);
 }
 
-function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType) {
-    // Calculate center subsidy
+function isNonDcrOnly() {
+    const category = document.getElementById('panelCategory');
+    return !!(category && category.value === 'nonDcr');
+}
+
+function updateSubsidyEligibility() {
+    const nonDcr = isNonDcrOnly();
+    const group = document.getElementById('stateSubsidyGroup');
+    const hint = document.getElementById('panelCategoryHint');
+    if (group) group.style.display = nonDcr ? 'none' : '';
+    if (hint) {
+        hint.textContent = nonDcr
+            ? 'Non-DCR panels get no central or state subsidy.'
+            : 'DCR panels are required for government subsidy eligibility';
+    }
+}
+
+function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible = true) {
+    // Non-DCR panels are not eligible for central or state subsidy.
     let centerSubsidy = 0;
-    if (systemSize >= 3) {
+    if (subsidyEligible && systemSize >= 3) {
         centerSubsidy = loanConfig.centerSubsidy['3+'];
-    } else if (systemSize >= 2) {
+    } else if (subsidyEligible && systemSize >= 2) {
         centerSubsidy = loanConfig.centerSubsidy[2];
-    } else if (systemSize >= 1) {
+    } else if (subsidyEligible && systemSize >= 1) {
         centerSubsidy = loanConfig.centerSubsidy[1];
     }
     
     // State subsidy
-    const stateSubsidy = availStateSubsidy ? loanConfig.stateSubsidy : 0;
+    const stateSubsidy = subsidyEligible && availStateSubsidy ? loanConfig.stateSubsidy : 0;
     
     // Total subsidy credited into the loan account
     const totalSubsidy = centerSubsidy + stateSubsidy;
@@ -327,7 +344,8 @@ function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthl
         paybackYears,
         totalSavings30Years: Math.round(totalSavings30Years),
         netSavings30Years: Math.round(netSavings30Years),
-        exceedsLimit: upfrontCash > 0
+        exceedsLimit: upfrontCash > 0,
+        subsidyEligible: !!subsidyEligible
     };
 }
 
@@ -365,6 +383,18 @@ function loanHowItWorks(loanData) {
     const rate = formatRate(loanData.interestRate);
     const subsidy = formatCurrency(loanData.subsidyApplied);
     const balance = formatCurrency(loanData.emiPrincipal);
+    if (!loanData.subsidyApplied) {
+        if (loanData.interestRate > loanConfig.cappedInterestRate) {
+            return `Full loan of ${formatCurrency(loanData.sanctionedLoan)} is above ₹2 lakhs, so the rate is ${rate}%. Non-DCR panels get no subsidy, so EMI is on the full ${balance}. Nothing is paid upfront.`;
+        }
+        if (loanData.loanType === 'full') {
+            return `The full system price is within ₹2 lakhs, so the rate stays ${rate}%. Non-DCR panels get no subsidy, so EMI is on the full ${balance}.`;
+        }
+        if (loanData.upfrontCash > 0) {
+            return `Loan is capped at ${formatCurrency(loanData.sanctionedLoan)} so the rate stays ${rate}%. Non-DCR panels get no subsidy, so EMI is on ${balance}. The remaining ${formatCurrency(loanData.upfrontCash)} is paid upfront in cash.`;
+        }
+        return `The system price is within ₹2 lakhs, so the whole amount is on the ${rate}% loan. Non-DCR panels get no subsidy, so EMI is on the full ${balance}. Nothing extra is paid upfront.`;
+    }
     if (loanData.interestRate > loanConfig.cappedInterestRate) {
         return `Full loan of ${formatCurrency(loanData.sanctionedLoan)} is above ₹2 lakhs, so the rate is ${rate}%. Subsidy of ${subsidy} is credited into this loan. EMI is on the ${balance} left. Nothing is paid upfront.`;
     }
@@ -392,13 +422,14 @@ function renderQuotePocketSummary(loanData, availLoan) {
     pocketEl.innerHTML = `
         <div class="summary-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
         <div class="summary-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
-        <div class="summary-pocket-note">${loanData.loanTypeLabel} · ${formatCurrency(loanData.emiPrincipal)} left after ${formatCurrency(loanData.subsidyApplied)} subsidy · ${formatRate(loanData.interestRate)}% for ${years} years</div>
+        <div class="summary-pocket-note">${loanData.loanTypeLabel} · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after ${formatCurrency(loanData.subsidyApplied)} subsidy` : `${formatCurrency(loanData.emiPrincipal)} on the loan, no subsidy`} · ${formatRate(loanData.interestRate)}% for ${years} years</div>
     `;
 }
 
 function showLoanDetails(finalAmount) {
     const availLoan = document.getElementById('availLoan').value;
-    const availStateSubsidy = document.getElementById('availStateSubsidy').value === 'yes';
+    const subsidyEligible = !isNonDcrOnly();
+    const availStateSubsidy = subsidyEligible && document.getElementById('availStateSubsidy').value === 'yes';
     const loanDuration = parseInt(document.getElementById('loanDuration').value) || 10;
     const loanType = (document.getElementById('loanType') || {}).value || 'upto2l';
     const loanDetailsDiv = document.getElementById('loanDetails');
@@ -417,7 +448,7 @@ function showLoanDetails(finalAmount) {
     const monthlyConsumption = monthlyBill > 0 ? calculateUnitsFromBill(monthlyBill, freeUnits) : 0;
     
     loanConfig.loanTenureMonths = loanDuration * 12;
-    const loanData = calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType);
+    const loanData = calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible);
     const years = loanConfig.loanTenureMonths / 12;
     const pocketNote = loanData.upfrontCash > 0
         ? `${formatCurrency(loanData.upfrontCash)} now + ${formatCurrency(loanData.totalPayable)} over ${years} years, including ${formatCurrency(loanData.totalInterest)} interest`
@@ -436,7 +467,7 @@ function showLoanDetails(finalAmount) {
             <div class="loan-pocket-row"><span>Pay now</span><strong>${formatCurrency(loanData.upfrontCash)}</strong></div>
             <div class="loan-pocket-note">${loanData.upfrontCash > 0 ? 'Cash. This part is not on the loan.' : 'No cash upfront. The whole balance stays on the loan.'}</div>
             <div class="loan-pocket-row"><span>Then EMI</span><strong>${formatCurrency(loanData.emi)}/month</strong></div>
-            <div class="loan-pocket-note">${years} years · ${formatCurrency(loanData.emiPrincipal)} left after subsidy · ${formatRate(loanData.interestRate)}%</div>
+            <div class="loan-pocket-note">${years} years · ${loanData.subsidyApplied ? `${formatCurrency(loanData.emiPrincipal)} left after subsidy` : `EMI on ${formatCurrency(loanData.emiPrincipal)}, no subsidy`} · ${formatRate(loanData.interestRate)}%</div>
             <div class="loan-pocket-row total"><span>Total from pocket</span><strong>${formatCurrency(loanData.totalFromPocket)}</strong></div>
             <div class="loan-pocket-note" style="margin-bottom: 0;">${pocketNote}</div>
         </div>
@@ -444,7 +475,7 @@ function showLoanDetails(finalAmount) {
         <table style="width: 100%; font-size: 0.9em; border-collapse: collapse;">
             <tr><td style="padding: 4px 0;">System cost</td><td style="text-align: right; font-weight: 600;">${formatCurrency(loanData.systemCost)}</td></tr>
             <tr><td style="padding: 4px 0;">Loan taken (${loanData.loanTypeLabel})</td><td style="text-align: right;">${formatCurrency(loanData.sanctionedLoan)}</td></tr>
-            <tr><td style="padding: 4px 0;">Center subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.centerSubsidy)}</td></tr>
+            ${loanData.centerSubsidy > 0 ? `<tr><td style="padding: 4px 0;">Center subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.centerSubsidy)}</td></tr>` : ''}
             ${loanData.stateSubsidy > 0 ? `<tr><td style="padding: 4px 0;">State subsidy, credited to loan</td><td style="text-align: right; color: green;">− ${formatCurrency(loanData.stateSubsidy)}</td></tr>` : ''}
             <tr style="border-top: 1px solid #ccc;"><td style="padding: 4px 0; font-weight: 600;">Balance for EMI</td><td style="text-align: right; font-weight: 600;">${formatCurrency(loanData.emiPrincipal)}</td></tr>
             <tr><td style="padding: 4px 0;">Interest rate</td><td style="text-align: right;">${formatRate(loanData.interestRate)}%</td></tr>
@@ -1456,6 +1487,8 @@ document.addEventListener('DOMContentLoaded', function() {
             resetPanelCountAdjustment();
             updateMixedSplitVisibility(this.value === 'mixed');
             updateKitMode();
+            updateSubsidyEligibility();
+            refreshLoanDetails();
         });
     }
     
@@ -1589,6 +1622,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!el) return;
         el.addEventListener('change', refreshLoanDetails);
     });
+    updateSubsidyEligibility();
 });
 
 // Fixed profit for this brand + system size. The table value is used as-is.
@@ -2835,11 +2869,11 @@ Thank you for your interest in *Ellipse Solar*. Here's your solar system quotati
 
 ⚡ *System:* ${systemSize} kW Solar On-Grid
 💰 *Total Price:* ${finalAmount} (GST Included)
-
+${document.getElementById('panelCategory').value === 'nonDcr' ? '' : `
 🏦 *Subsidy:*
 • Central Govt. Subsidy: ₹78,000
 • State Govt. Subsidy: ₹17,000
-
+`}
 ✅ *What you get:*
 • 30 Years Panel Performance Warranty
 • 5 Years Complete Maintenance & Cooperation Warranty
