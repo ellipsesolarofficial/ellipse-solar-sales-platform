@@ -17,7 +17,7 @@
                     <h1 style="font-size: 1.1em;">Solar Installation Quotation Calculator</h1>
                 </div>
             </div>
-            <span class="portal-version" id="portalVersion">1.14</span>
+            <span class="portal-version" id="portalVersion">1.15</span>
         </header>
 
         <main>
@@ -442,10 +442,10 @@
                         <div class="form-group">
                             <label for="subsidyRepay">After Subsidy</label>
                             <select id="subsidyRepay" name="subsidyRepay">
-                                <option value="sameEmi" selected>Same EMI, shorter tenure</option>
-                                <option value="lowerEmi">Lower EMI, same tenure</option>
+                                <option value="lowerEmi" selected>Lower EMI, same tenure</option>
+                                <option value="sameEmi">Same EMI, shorter tenure</option>
                             </select>
-                            <small>Default keeps the EMI of the original loan and finishes sooner once subsidy is credited. The other option keeps the tenure and reduces the EMI.</small>
+                            <small>Default keeps the selected tenure and reduces the EMI once subsidy is credited. The other option keeps that EMI and finishes sooner.</small>
                         </div>
 
                         <div class="form-group">
@@ -566,6 +566,6 @@
         </footer>
     </div>
 
-    <script src="script.js?v=1.14"></script>
+    <script src="script.js?v=1.15"></script>
 </body>
 </html>

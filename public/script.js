@@ -314,7 +314,7 @@ function updateSubsidyEligibility() {
     }
 }
 
-function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible = true, repayMode = 'sameEmi') {
+function calculateLoanDetails(finalAmount, systemSize, availStateSubsidy, monthlyConsumption, loanType, subsidyEligible = true, repayMode = 'lowerEmi') {
     // Non-DCR panels are not eligible for central or state subsidy.
     let centerSubsidy = 0;
     if (subsidyEligible && systemSize >= 3) {
@@ -537,7 +537,7 @@ function showLoanDetails(finalAmount) {
     const availStateSubsidy = subsidyEligible && document.getElementById('availStateSubsidy').value === 'yes';
     const loanDuration = parseInt(document.getElementById('loanDuration').value) || 10;
     const loanType = (document.getElementById('loanType') || {}).value || 'upto2l';
-    const repayMode = (document.getElementById('subsidyRepay') || {}).value || 'sameEmi';
+    const repayMode = (document.getElementById('subsidyRepay') || {}).value || 'lowerEmi';
     const loanDetailsDiv = document.getElementById('loanDetails');
     const systemSize = parseFloat(document.getElementById('systemSize').value) || 3;
     lastQuotedFinalAmount = finalAmount;
