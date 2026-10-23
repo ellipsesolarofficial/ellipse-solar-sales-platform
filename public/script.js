@@ -2414,6 +2414,87 @@ function calculateQuotation(params) {
 }
 
 // Display quotation
+function getCustomerOffer(quotation) {
+    const systemSize = Number(quotation.systemSize) || 0;
+    const finalAmount = quotation.breakdown.finalAmount;
+    const eligible = quotation.panelCategory !== 'nonDcr';
+    let centerSubsidy = 0;
+    if (eligible && systemSize >= 3) centerSubsidy = loanConfig.centerSubsidy['3+'];
+    else if (eligible && systemSize >= 2) centerSubsidy = loanConfig.centerSubsidy[2];
+    else if (eligible && systemSize >= 1) centerSubsidy = loanConfig.centerSubsidy[1];
+    const stateSelected = document.getElementById('availStateSubsidy')
+        && document.getElementById('availStateSubsidy').value === 'yes';
+    const stateSubsidy = eligible && stateSelected ? loanConfig.stateSubsidy : 0;
+    const subsidyTotal = Math.min(centerSubsidy + stateSubsidy, finalAmount);
+    const afterSubsidy = finalAmount - subsidyTotal;
+
+    const monthlyUnits = systemSize * loanConfig.unitsPerKWPerDay * 30;
+    const annualUnits = Math.round(monthlyUnits * 12);
+    const monthlyBill = parseFloat((document.getElementById('monthlyBill') || {}).value) || 0;
+    const freeUnits = document.getElementById('freeUnits') && document.getElementById('freeUnits').value === 'yes';
+    const monthlyConsumption = monthlyBill > 0 ? calculateUnitsFromBill(monthlyBill, freeUnits) : 0;
+    const leftoverUnits = Math.max(0, monthlyUnits - monthlyConsumption);
+    const monthlyReturn = monthlyConsumption * loanConfig.avgElectricityRate
+        + leftoverUnits * loanConfig.govtBuybackRate;
+    const annualSavings = Math.round(monthlyReturn * 12);
+    const paybackMonths = monthlyReturn > 0 ? Math.ceil(afterSubsidy / monthlyReturn) : 0;
+    const paybackYears = (paybackMonths / 12).toFixed(1);
+
+    return {
+        centerSubsidy,
+        stateSubsidy,
+        subsidyTotal,
+        afterSubsidy,
+        annualUnits,
+        annualSavings,
+        paybackYears
+    };
+}
+
+function offerBreakdownRows(offer) {
+    const rows = [];
+    if (offer.centerSubsidy > 0) {
+        rows.push(`<tr class="subsidy"><td>Central subsidy</td><td>− ${formatCurrency(offer.centerSubsidy)}</td></tr>`);
+    }
+    if (offer.stateSubsidy > 0) {
+        rows.push(`<tr class="subsidy"><td>State subsidy (Rajasthan)</td><td>− ${formatCurrency(offer.stateSubsidy)}</td></tr>`);
+    }
+    if (offer.subsidyTotal === 0) {
+        rows.push(`<tr><td>Subsidy</td><td>None (Non-DCR)</td></tr>`);
+    }
+    rows.push(`<tr class="final-amount"><td><strong>Price after subsidy</strong></td><td><strong>${formatCurrency(offer.afterSubsidy)}</strong></td></tr>`);
+    return rows.join('');
+}
+
+function renderCustomerOffer(quotation) {
+    const offer = getCustomerOffer(quotation);
+    const offerLines = document.getElementById('quoteOfferLines');
+    if (offerLines) {
+        const subsidyLines = offer.subsidyTotal === 0
+            ? `<div>Subsidy: none for Non-DCR</div>`
+            : `<div>Central subsidy: − ${formatCurrency(offer.centerSubsidy)}</div>`
+                + (offer.stateSubsidy ? `<div>State subsidy: − ${formatCurrency(offer.stateSubsidy)}</div>` : '');
+        offerLines.innerHTML = `
+            ${subsidyLines}
+            <div><strong>Price after subsidy: ${formatCurrency(offer.afterSubsidy)}</strong></div>
+            <div>Generation: ${offer.annualUnits.toLocaleString('en-IN')} units/year</div>
+            <div>Annual savings: ${formatCurrency(offer.annualSavings)}</div>
+            <div>Payback: ${offer.paybackYears} years</div>
+        `;
+    }
+    const summary = document.getElementById('quoteOfferSummary');
+    if (summary) {
+        summary.style.display = 'grid';
+        summary.innerHTML = `
+            <div class="summary-pocket-row"><span>After subsidy</span><strong>${formatCurrency(offer.afterSubsidy)}</strong></div>
+            <div class="summary-pocket-note">${offer.annualUnits.toLocaleString('en-IN')} units/year · ${formatCurrency(offer.annualSavings)} saved/year · payback ${offer.paybackYears} years</div>
+        `;
+    }
+    const generation = document.getElementById('quoteGeneration');
+    if (generation) generation.textContent = `${offer.annualUnits.toLocaleString('en-IN')} units/year`;
+    return offer;
+}
+
 function displayQuotation(data) {
     const q = data.quotation;
     
@@ -2629,16 +2710,37 @@ function displayQuotation(data) {
             </tr>
         `;
     }
+
+    breakdownHTML += offerBreakdownRows(getCustomerOffer(q));
     
     document.querySelector('.breakdown-table tbody').innerHTML = breakdownHTML;
     
+    renderCustomerOffer(q);
     resultContainer.style.display = 'block';
     resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
 
 // Generate PDF using jsPDF
-function generatePDF(quotation) {
+function loadImageData(src) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+    });
+}
+
+async function generatePDF(quotation) {
+    const sealData = await loadImageData('company-seal.png');
+    const signData = await loadImageData('authorized-signature.png');
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const q = quotation;
@@ -2812,7 +2914,30 @@ function generatePDF(quotation) {
     y += 7;
     doc.text('Plant Size', 30, y); doc.text(q.systemSize + ' KW (' + phaseText + ')', 80, y);
     y += 5;
+    const offer = getCustomerOffer(q);
     doc.text('System Cost', 30, y); doc.text('INR ' + q.breakdown.finalAmount.toLocaleString('en-IN') + '/- (GST PAID)', 80, y);
+    y += 5;
+    if (offer.centerSubsidy > 0) {
+        doc.text('Central Subsidy', 30, y); doc.text('- INR ' + offer.centerSubsidy.toLocaleString('en-IN') + '/-', 80, y);
+        y += 5;
+    }
+    if (offer.stateSubsidy > 0) {
+        doc.text('State Subsidy', 30, y); doc.text('- INR ' + offer.stateSubsidy.toLocaleString('en-IN') + '/-', 80, y);
+        y += 5;
+    }
+    if (offer.subsidyTotal === 0) {
+        doc.text('Subsidy', 30, y); doc.text('None (Non-DCR)', 80, y);
+        y += 5;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.text('Price After Subsidy', 30, y); doc.text('INR ' + offer.afterSubsidy.toLocaleString('en-IN') + '/-', 80, y);
+    doc.setFont('helvetica', 'normal');
+    y += 7;
+    doc.text('Annual Generation', 30, y); doc.text(offer.annualUnits.toLocaleString('en-IN') + ' units/year', 80, y);
+    y += 5;
+    doc.text('Annual Savings', 30, y); doc.text('INR ' + offer.annualSavings.toLocaleString('en-IN') + '/-', 80, y);
+    y += 5;
+    doc.text('Payback', 30, y); doc.text(offer.paybackYears + ' years', 80, y);
     y += 5;
     doc.text('Extra As', 30, y); doc.text('NIL', 80, y);
     y += 5;
@@ -2906,6 +3031,7 @@ function generatePDF(quotation) {
     y += 8;
     doc.text('Thanking you and assuring you of our very best & prompt attention at all times.', 15, y);
     
+    if (y > 210) { doc.addPage(); y = 20; }
     y += 10;
     doc.text('Yours Faithfully', 15, y);
     y += 8;
@@ -2913,8 +3039,17 @@ function generatePDF(quotation) {
     y += 7;
     doc.setFont('helvetica', 'bold');
     doc.text('For, ELLIPSE SOLAR', 15, y);
-    
-    y += 15;
+    y += 6;
+    if (signData) doc.addImage(signData, 'PNG', 15, y, 62, 19);
+    if (sealData) doc.addImage(sealData, 'PNG', 155, y - 6, 32, 32);
+    y += 22;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('Saurav Gautam', 15, y);
+    y += 4;
+    doc.setFontSize(8);
+    doc.text('Authorized Signatory', 15, y);
+    y += 10;
     
     // Bank Details
     doc.setFont('helvetica', 'bold');
@@ -3073,7 +3208,7 @@ function logToGoogleSheets(quotation, phoneNumber, salesperson) {
 }
 
 // Form submit handler (Generate PDF)
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(form);
@@ -3114,7 +3249,7 @@ form.addEventListener('submit', (e) => {
         logToGoogleSheets(quotation, phoneNumber, salesperson);
         
         // Generate PDF
-        const pdf = generatePDF(quotation);
+        const pdf = await generatePDF(quotation);
         
         let actionsHTML = `
             <div style="text-align: center;">
