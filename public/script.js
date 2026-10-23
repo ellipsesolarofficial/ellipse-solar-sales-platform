@@ -2739,8 +2739,7 @@ function loadImageData(src) {
 }
 
 async function generatePDF(quotation) {
-    const sealData = await loadImageData('company-seal.png');
-    const signData = await loadImageData('authorized-signature.png');
+    const signoffData = await loadImageData('sign-and-seal.png');
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const q = quotation;
@@ -3031,7 +3030,7 @@ async function generatePDF(quotation) {
     y += 8;
     doc.text('Thanking you and assuring you of our very best & prompt attention at all times.', 15, y);
     
-    if (y > 210) { doc.addPage(); y = 20; }
+    if (y > 155) { doc.addPage(); y = 20; }
     y += 10;
     doc.text('Yours Faithfully', 15, y);
     y += 8;
@@ -3039,17 +3038,13 @@ async function generatePDF(quotation) {
     y += 7;
     doc.setFont('helvetica', 'bold');
     doc.text('For, ELLIPSE SOLAR', 15, y);
-    y += 6;
-    if (signData) doc.addImage(signData, 'PNG', 15, y, 62, 19);
-    if (sealData) doc.addImage(sealData, 'PNG', 155, y - 6, 32, 32);
-    y += 22;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text('Saurav Gautam', 15, y);
     y += 4;
+    if (signoffData) doc.addImage(signoffData, 'PNG', 108, y, 78, 46);
+    y += 48;
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text('Authorized Signatory', 15, y);
-    y += 10;
+    doc.text('Saurav Gautam, Authorized Signatory', 108, y);
+    y += 8;
     
     // Bank Details
     doc.setFont('helvetica', 'bold');
