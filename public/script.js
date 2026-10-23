@@ -2739,7 +2739,7 @@ function loadImageData(src) {
 }
 
 async function generatePDF(quotation) {
-    const signoffData = await loadImageData('sign-and-seal.png');
+    const signoffData = await loadImageData('sign-and-seal.png?v=1.19');
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const q = quotation;
