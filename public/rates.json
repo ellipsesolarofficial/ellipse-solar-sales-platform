@@ -1716,12 +1716,32 @@
     },
     "dcWire": {
       "brand": "POLYCAB",
-      "displayName": "DC Wire - Polycab Copper 4mm",
-      "size": "4mm",
+      "displayName": "DC Wire - Polycab Copper 1 Core 4 Sq mm",
+      "size": "1 core 4 sq mm",
       "ratePerMeter": 56,
       "baseLength": 30,
       "perFloorExtra": 10,
-      "description": "DC Wire 4mm"
+      "description": "DC Wire",
+      "byCapacity": [
+        {
+          "maxKw": 5,
+          "size": "1 core 4 sq mm",
+          "spec": "1C x 4 SQmm Copper",
+          "displayName": "DC Wire - Polycab Copper 1 Core 4 Sq mm"
+        },
+        {
+          "maxKw": 10,
+          "size": "1 core 6 sq mm",
+          "spec": "1C x 6 SQmm Copper",
+          "displayName": "DC Wire - Polycab Copper 1 Core 6 Sq mm"
+        },
+        {
+          "maxKw": 50,
+          "size": "1 core 10 sq mm",
+          "spec": "1C x 10 SQmm Copper",
+          "displayName": "DC Wire - Polycab Copper 1 Core 10 Sq mm"
+        }
+      ]
     },
     "blackPipe": {
       "brand": "REPUTED",
@@ -1745,13 +1765,35 @@
       "pricing": {
         "1ph": {
           "size": "2 core 6 sq mm ALU",
+          "spec": "2C x 6 SQmm Aluminium",
           "ratePerMeter": 78
         },
         "3ph": {
           "size": "4 core 10 sq mm",
+          "spec": "4C x 10 SQmm Copper",
           "ratePerMeter": 125
         }
       },
+      "byCapacity": [
+        {
+          "maxKw": 20,
+          "size": "4 core 10 sq mm",
+          "spec": "4C x 10 SQmm",
+          "displayName": "AC Armoured Cable - Polycab 4 Core 10 Sq mm"
+        },
+        {
+          "maxKw": 30,
+          "size": "4 core 16 sq mm",
+          "spec": "4C x 16 SQmm",
+          "displayName": "AC Armoured Cable - Polycab 4 Core 16 Sq mm"
+        },
+        {
+          "maxKw": 50,
+          "size": "4 core 35 sq mm",
+          "spec": "4C x 35 SQmm",
+          "displayName": "AC Armoured Cable - Polycab 4 Core 35 Sq mm"
+        }
+      ],
       "length": 5,
       "description": "AC Armoured Cable"
     },

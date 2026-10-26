@@ -753,6 +753,40 @@ function kitIncludes(kit, item) {
     return !!(kit && Array.isArray(kit.includes) && kit.includes.indexOf(item) !== -1);
 }
 
+function phaseKeyFrom(phaseType) {
+    return (phaseType === '3phase' || phaseType === '3ph') ? '3ph' : '1ph';
+}
+
+function dcCableSpec(systemKw) {
+    const comp = (rates && rates.components && rates.components.dcWire) || {};
+    const band = (comp.byCapacity || []).find(item => systemKw <= item.maxKw);
+    if (!band) {
+        return {
+            size: comp.size || '1 core 4 sq mm',
+            spec: '1C x 4 SQmm Copper',
+            displayName: comp.displayName || 'DC Wire - Polycab Copper 1 Core 4 Sq mm',
+            ratePerMeter: comp.ratePerMeter || 0
+        };
+    }
+    return { ...band, ratePerMeter: comp.ratePerMeter || 0 };
+}
+
+function acCableSpec(systemKw, phaseType) {
+    const comp = (rates && rates.components && rates.components.acWire) || {};
+    const phase = phaseKeyFrom(phaseType);
+    const priced = (comp.pricing && comp.pricing[phase]) || {};
+    if (systemKw >= 10 && comp.byCapacity && comp.byCapacity.length) {
+        const band = comp.byCapacity.find(item => systemKw <= item.maxKw) || comp.byCapacity[comp.byCapacity.length - 1];
+        return { ...band, ratePerMeter: priced.ratePerMeter || 0 };
+    }
+    return {
+        size: priced.size || '2 core 6 sq mm ALU',
+        spec: priced.spec || (phase === '3ph' ? '4C x 10 SQmm Copper' : '2C x 6 SQmm Aluminium'),
+        displayName: (comp.displayName && comp.displayName[phase]) || 'AC Armoured Cable',
+        ratePerMeter: priced.ratePerMeter || 0
+    };
+}
+
 function kitIncludeLabel(includes) {
     const labels = {
         panels: 'modules',
@@ -2200,12 +2234,13 @@ function calculateQuotation(params) {
         
         // DC Wire - depends on floors
         if (key === 'dcWire') {
+            const cable = dcCableSpec(numSystemSize);
             const length = comp.baseLength + (numFloors - 1) * comp.perFloorExtra;
-            const cost = comp.ratePerMeter * length;
+            const cost = cable.ratePerMeter * length;
             componentCosts[key] = {
-                name: `${comp.description} (${length}m)`,
+                name: `${comp.description} (${cable.size}, ${length}m)`,
                 brand: comp.brand,
-                rate: comp.ratePerMeter,
+                rate: cable.ratePerMeter,
                 quantity: length,
                 baseCost: Math.round(cost),
                 total: Math.round(cost)
@@ -2234,14 +2269,13 @@ function calculateQuotation(params) {
         
         // AC Wire (Armoured Cable) - depends on phase
         if (key === 'acWire') {
-            const phase = (phaseType === '3phase' || phaseType === '3ph') ? '3ph' : '1ph';
-            const wireConfig = comp.pricing[phase];
+            const cable = acCableSpec(numSystemSize, phaseType);
             const length = comp.length;
-            const cost = wireConfig.ratePerMeter * length;
+            const cost = cable.ratePerMeter * length;
             componentCosts[key] = {
-                name: `${comp.description} (${wireConfig.size}, ${length}m)`,
+                name: `${comp.description} (${cable.size}, ${length}m)`,
                 brand: comp.brand,
-                rate: wireConfig.ratePerMeter,
+                rate: cable.ratePerMeter,
                 quantity: length,
                 baseCost: Math.round(cost),
                 total: Math.round(cost)
@@ -2363,6 +2397,8 @@ function calculateQuotation(params) {
         structureBrand: structureConfig.name,
         siteType: siteType || 'standard',
         numberOfFloors: numFloors,
+        dcCable: dcCableSpec(numSystemSize),
+        acCable: acCableSpec(numSystemSize, phaseType),
         panelCount,
         panelConfig: adjustedPanelConfig,
         inverterConfig,
@@ -2558,8 +2594,8 @@ function displayQuotation(data) {
                 : getDisplayName(rc['acdb-dcdb-combo'], 'Polycab')],
         ['Earthing', markKit(getDisplayName(rc.earthing1mtr, 'Chemical Earthing'), 'earthing1mtr')],
         ['Earthing Wire', getDisplayName(rc.earthingWire, 'Earthing Wire')],
-        ['DC Wire', markKit(getDisplayName(rc.dcWire, 'DC Wire'), 'dcWire')],
-        ['AC Cable', getDisplayName(rc.acWire, 'AC Cable')],
+        ['DC Wire', markKit((q.dcCable && q.dcCable.displayName) || getDisplayName(rc.dcWire, 'DC Wire'), 'dcWire')],
+        ['AC Cable', (q.acCable && q.acCable.displayName) || getDisplayName(rc.acWire, 'AC Cable')],
         ['MC4 Connectors', markKit(`${getDisplayName(rc.mc4Connector, 'MC4 Connectors')} - ${q.panelCount + 4} Pairs`, 'mc4Connector')],
         ['Drain Clip', `${getDisplayName(rc.drainClip, 'Universal Drain Clip (30 MM)')} - ${q.panelCount * ((rc.drainClip && rc.drainClip.quantityPerPanel) || 2)} Pcs`],
         ['Lightning Arrester', markKit(getDisplayName(rc.lightningArrester, 'Lightning Arrester'), 'lightningArrester')],
@@ -2854,8 +2890,8 @@ async function generatePDF(quotation) {
     // Get panel brand name and DC/AC wire details
     const brandConfig = rates.solarPanels[q.panelBrand] || { name: 'INA' };
     const brandName = brandConfig.name;
-    const dcWireSpec = '1C x 4 SQmm Copper';
-    const acWireSpec = phaseText === '1Ph' ? '2C x 6 SQmm Aluminium' : '4C x 10 SQmm Copper';
+    const dcWireSpec = (q.dcCable && q.dcCable.spec) || '1C x 4 SQmm Copper';
+    const acWireSpec = (q.acCable && q.acCable.spec) || (phaseText === '1Ph' ? '2C x 6 SQmm Aluminium' : '4C x 10 SQmm Copper');
     const drainClipQty = q.panelCount * ((rates.components.drainClip && rates.components.drainClip.quantityPerPanel) || 2);
     
     // BOM rows - modules always collapse into a single row; DCR/Non-DCR split is internal only
