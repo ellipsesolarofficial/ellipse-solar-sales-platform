@@ -7,7 +7,10 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=1.16">
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png?v=1.16">
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=1.16">
-    <link rel="stylesheet" href="styles.css?v=1.11">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=1.23">
     <!-- jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -17,13 +20,82 @@
             <div class="logo">
                 <img src="company_logo.png" alt="Ellipse Solar" class="company-logo" loading="eager">
                 <div class="logo-text">
-                    <h1 style="font-size: 1.1em;">Solar Installation Quotation Calculator</h1>
+                    <h1>Ellipse Solar</h1>
                 </div>
             </div>
-            <span class="portal-version" id="portalVersion">1.22</span>
+            <nav class="site-jump">
+                <a href="#services">Services</a>
+                <a href="#savings">Savings</a>
+                <a href="#quotation">Quotation</a>
+            </nav>
+            <span class="portal-version" id="portalVersion">1.23</span>
         </header>
 
-        <main>
+        <section class="site-hero">
+            <img src="site/panels.jpg" alt="Rows of solar panels in daylight" width="1600" height="1066">
+            <div>
+                <h2>Rooftop solar in Jaipur</h2>
+                <p>Free visit, survey, design, papers, loan help, and installation. Extra daytime power is sold back to the grid.</p>
+                <a class="site-cta" href="#savings">Calculate your savings</a>
+            </div>
+        </section>
+
+        <section class="site-block" id="services">
+            <h2>End to end, with us</h2>
+            <p class="site-lede">From the first free visit in Jaipur to the city meter.</p>
+            <div class="site-steps">
+                <article><h3>Free visit</h3><p>We come to the site, see the roof, and go through the electricity bill. No charge.</p></article>
+                <article><h3>Rooftop survey</h3><p>Shadow, structure, and the meter. The size comes from this visit.</p></article>
+                <article><h3>Design</h3><p>You see how the panels sit on the roof, with savings and payback, before you decide.</p></article>
+                <article><h3>Document corrections</h3><p>Subsidy forms, net-metering papers, and Jaipur utility documents. We correct and file them.</p></article>
+                <article><h3>Loan help</h3><p>If you want EMI, we help with the loan file. Eligible homes can claim ₹95,000 central subsidy and ₹17,000 Rajasthan state subsidy.</p></article>
+                <article><h3>Install and handover</h3><p>We install, then stay for the city inspection and the new meter.</p></article>
+            </div>
+        </section>
+
+        <section class="site-block site-block--photo" id="savings">
+            <div class="site-photo">
+                <img src="site/house.jpg" alt="Installers wiring a solar panel on a roof" width="1600" height="1066">
+            </div>
+            <div>
+                <h2>Calculate your savings</h2>
+                <p class="site-lede">Jaipur home rooftops. Savings, subsidy, and payback. The system price is shared after the survey.</p>
+                <label for="siteBill">Monthly electricity bill</label>
+                <input type="number" id="siteBill" min="500" max="100000" value="3000">
+                <label for="siteArea">Area in Jaipur</label>
+                <select id="siteArea">
+                    <option>Mansarovar</option>
+                    <option>Vaishali Nagar</option>
+                    <option>Malviya Nagar</option>
+                    <option>Jagatpura</option>
+                    <option>C-Scheme</option>
+                    <option>Other Jaipur</option>
+                </select>
+                <div class="site-results" id="siteResults"></div>
+            </div>
+        </section>
+
+        <section class="site-block" id="reviews">
+            <h2>From Jaipur roofs</h2>
+            <div class="review-float">
+                <div class="review-track">
+                    <div class="review-set">
+                        <article class="review-card"><p>“Bill was about ₹4,200. After the rooftop, most months we only pay the fixed charges.”</p><span>Neha · Mansarovar</span></article>
+                        <article class="review-card"><p>“They came for the free visit, then measured the terrace. The subsidy papers were corrected by them.”</p><span>Rakesh · Vaishali Nagar</span></article>
+                        <article class="review-card"><p>“Lifts and the water pump run on the daytime generation now.”</p><span>Suresh · Malviya Nagar, society</span></article>
+                        <article class="review-card"><p>“They finished in three days and came back after the first rain.”</p><span>Ankit · Jagatpura</span></article>
+                    </div>
+                    <div class="review-set" aria-hidden="true">
+                        <article class="review-card"><p>“Bill was about ₹4,200. After the rooftop, most months we only pay the fixed charges.”</p><span>Neha · Mansarovar</span></article>
+                        <article class="review-card"><p>“They came for the free visit, then measured the terrace. The subsidy papers were corrected by them.”</p><span>Rakesh · Vaishali Nagar</span></article>
+                        <article class="review-card"><p>“Lifts and the water pump run on the daytime generation now.”</p><span>Suresh · Malviya Nagar, society</span></article>
+                        <article class="review-card"><p>“They finished in three days and came back after the first rain.”</p><span>Ankit · Jagatpura</span></article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main id="quotation">
             <div class="form-container">
                 <h2>Generate Solar Quotation</h2>
                 
@@ -592,6 +664,6 @@
         </footer>
     </div>
 
-    <script src="script.js?v=1.22"></script>
+    <script src="script.js?v=1.23"></script>
 </body>
 </html>
