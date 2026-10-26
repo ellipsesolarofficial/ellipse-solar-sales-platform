@@ -513,7 +513,16 @@ function loanHowItWorks(loanData) {
 function renderQuotePocketSummary(loanData, availLoan) {
     const pocketEl = document.getElementById('quotePocketSummary');
     const subtitleEl = document.getElementById('quoteFinalAmountSubtitle');
-    if (subtitleEl) subtitleEl.textContent = 'System price, GST included';
+    if (subtitleEl) {
+        const perWattOn = document.getElementById('priceMode')
+            && document.getElementById('priceMode').value === 'perWatt'
+            && document.getElementById('adminCode')
+            && document.getElementById('adminCode').value === 'racecar';
+        const perWattRate = perWattOn ? parseFloat(document.getElementById('perWattRate').value) : 0;
+        subtitleEl.textContent = perWattRate > 0
+            ? `₹${perWattRate} per watt · GST included`
+            : 'System price, GST included';
+    }
     if (!pocketEl) return;
     if (availLoan !== 'yes' || !loanData) {
         pocketEl.style.display = 'none';
