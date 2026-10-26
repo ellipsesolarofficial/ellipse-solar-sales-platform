@@ -1896,6 +1896,7 @@ function calculateQuotation(params) {
         numberOfFloors,
         commission,
         discount,
+        perWattRate,
         customerName, 
         location,
         panelCountOverride,
@@ -1913,6 +1914,7 @@ function calculateQuotation(params) {
     const numInverterCapacity = parseFloat(inverterCapacity) || numSystemSize;
     const numCommission = parseFloat(commission) || 0;
     const numDiscount = parseFloat(discount) || 0;
+    const numPerWattRate = parseFloat(perWattRate) || 0;
     const numFloors = parseInt(numberOfFloors) || 1;
     
     // Resolve system type (on-grid / off-grid / hybrid)
@@ -2349,9 +2351,22 @@ function calculateQuotation(params) {
     const discountAmount = numDiscount;
     
     // Total before GST = material + profit + additional charges + commission - discount
-    const totalBeforeGST = totalMaterialCost + profitAmount + totalAdditionalCharges + commissionAmount - discountAmount;
-    const totalGSTAmount = totalBeforeGST * rates.gstRate;
-    const totalAmount = totalBeforeGST + totalGSTAmount;
+    let totalBeforeGST = totalMaterialCost + profitAmount + totalAdditionalCharges + commissionAmount - discountAmount;
+    let totalGSTAmount = totalBeforeGST * rates.gstRate;
+    let totalAmount = totalBeforeGST + totalGSTAmount;
+    const componentFinal = Math.round(totalAmount);
+    let perWattPricing = null;
+
+    if (numPerWattRate > 0) {
+        const watts = Math.round(numSystemSize * 1000);
+        const perWattAmount = Math.round(watts * numPerWattRate);
+        const beforeGst = Math.round(perWattAmount / (1 + rates.gstRate));
+        totalBeforeGST = beforeGst;
+        totalGSTAmount = perWattAmount - beforeGst;
+        totalAmount = perWattAmount;
+        perWattPricing = { watts, rate: numPerWattRate, amount: perWattAmount };
+    }
+
     const finalAmount = totalAmount;
     
     // 9. Calculate annual generation
@@ -2399,6 +2414,7 @@ function calculateQuotation(params) {
         numberOfFloors: numFloors,
         dcCable: dcCableSpec(numSystemSize),
         acCable: acCableSpec(numSystemSize, phaseType),
+        perWattPricing,
         panelCount,
         panelConfig: adjustedPanelConfig,
         inverterConfig,
@@ -2434,8 +2450,9 @@ function calculateQuotation(params) {
             totalBeforeGST: Math.round(totalBeforeGST),
             totalGSTAmount: Math.round(totalGSTAmount),
             totalAmount: Math.round(totalAmount),
-            commissionAmount: Math.round(commissionAmount),
-            discountAmount: Math.round(discountAmount),
+            commissionAmount: perWattPricing ? 0 : Math.round(commissionAmount),
+            discountAmount: perWattPricing ? 0 : Math.round(discountAmount),
+            componentFinal,
             finalAmount: Math.round(finalAmount)
         },
         technicalDetails: {
@@ -2536,6 +2553,12 @@ function displayQuotation(data) {
     
     // Update summary card
     document.getElementById('quoteFinalAmountSummary').textContent = formatCurrency(q.breakdown.finalAmount);
+    const amountSubtitle = document.getElementById('quoteFinalAmountSubtitle');
+    if (amountSubtitle) {
+        amountSubtitle.textContent = q.perWattPricing
+            ? `₹${q.perWattPricing.rate} per watt · GST included`
+            : 'System price, GST included';
+    }
     
     document.getElementById('quoteCustomerName').textContent = q.customerName;
     document.getElementById('quoteDate').textContent = `Date: ${q.date} | Quote ID: ${q.quotationId}`;
@@ -2702,6 +2725,20 @@ function displayQuotation(data) {
                 <td>Civil Work Material</td>
                 <td>${formatCurrency(q.breakdown.civilWorkMaterial)}</td>
             </tr>
+            ${q.perWattPricing ? `
+            <tr class="subtotal">
+                <td>Component calculation (reference)</td>
+                <td>${formatCurrency(q.breakdown.componentFinal)}</td>
+            </tr>
+            <tr>
+                <td>Per watt (${q.perWattPricing.watts.toLocaleString('en-IN')} W × ₹${q.perWattPricing.rate})</td>
+                <td>${formatCurrency(q.perWattPricing.amount)}</td>
+            </tr>
+            <tr class="final-amount">
+                <td><strong>Final Amount (GST included)</strong></td>
+                <td><strong>${formatCurrency(q.breakdown.finalAmount)}</strong></td>
+            </tr>
+            ` : `
             <tr>
                 <td>Sales Category (S)</td>
                 <td>+ ${formatCurrency(q.breakdown.commissionAmount)}</td>
@@ -2722,6 +2759,7 @@ function displayQuotation(data) {
                 <td><strong>Final Amount</strong></td>
                 <td><strong>${formatCurrency(q.breakdown.finalAmount)}</strong></td>
             </tr>
+            `}
         `;
     } else {
         // CUSTOMER VIEW - only price + GST + discount
@@ -2950,6 +2988,11 @@ async function generatePDF(quotation) {
     doc.text('Plant Size', 30, y); doc.text(q.systemSize + ' KW (' + phaseText + ')', 80, y);
     y += 5;
     const offer = getCustomerOffer(q);
+    if (q.perWattPricing) {
+        doc.text('Rate', 30, y);
+        doc.text('INR ' + q.perWattPricing.rate + ' per watt × ' + q.perWattPricing.watts.toLocaleString('en-IN') + ' W', 80, y);
+        y += 5;
+    }
     doc.text('System Cost', 30, y); doc.text('INR ' + q.breakdown.finalAmount.toLocaleString('en-IN') + '/- (GST PAID)', 80, y);
     y += 5;
     if (offer.centerSubsidy > 0) {
@@ -3164,6 +3207,38 @@ _Ellipse Solar - Powering a Greener Tomorrow_ 🌿`;
     window.open(whatsappUrl, '_blank');
 }
 
+function syncPerWattAccess() {
+    const code = document.getElementById('adminCode');
+    const unlocked = code && code.value === 'racecar';
+    const modeGroup = document.getElementById('perWattGroup');
+    const rateGroup = document.getElementById('perWattRateGroup');
+    const mode = document.getElementById('priceMode');
+    if (modeGroup) modeGroup.style.display = unlocked ? '' : 'none';
+    const showRate = unlocked && mode && mode.value === 'perWatt';
+    if (rateGroup) rateGroup.style.display = showRate ? '' : 'none';
+    if (!unlocked && mode) mode.value = 'components';
+}
+
+function applySalespersonPerWatt(params) {
+    params.perWattRate = 0;
+    const code = document.getElementById('adminCode');
+    const unlocked = code && code.value === 'racecar';
+    const mode = document.getElementById('priceMode');
+    if (!unlocked || !mode || mode.value !== 'perWatt') return true;
+    const rate = parseFloat(document.getElementById('perWattRate').value);
+    if (!rate || rate <= 0) {
+        alert('Enter the rate per watt.');
+        return false;
+    }
+    params.perWattRate = rate;
+    return true;
+}
+
+const adminCodeInput = document.getElementById('adminCode');
+if (adminCodeInput) adminCodeInput.addEventListener('input', syncPerWattAccess);
+const priceModeSelect = document.getElementById('priceMode');
+if (priceModeSelect) priceModeSelect.addEventListener('change', syncPerWattAccess);
+
 // Calculate button handler
 calculateBtn.addEventListener('click', () => {
     const formData = new FormData(form);
@@ -3174,6 +3249,7 @@ calculateBtn.addEventListener('click', () => {
     params.location = params.location || '';
     delete params.phoneNumber;
     delete params.salesperson;
+    if (!applySalespersonPerWatt(params)) return;
 
     if (isKitPricePending(params.panelBrand)) {
         const brandName = (rates.solarPanels[params.panelBrand] || {}).name || 'This brand';
@@ -3252,6 +3328,7 @@ form.addEventListener('submit', async (e) => {
     delete params.phoneNumber;
     const salesperson = params.salesperson || '';
     delete params.salesperson;
+    if (!applySalespersonPerWatt(params)) return;
 
     if (isKitPricePending(params.panelBrand)) {
         const brandName = (rates.solarPanels[params.panelBrand] || {}).name || 'This brand';
