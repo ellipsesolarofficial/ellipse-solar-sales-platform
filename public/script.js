@@ -2370,10 +2370,22 @@ function calculateQuotation(params) {
         const watts = Math.round(numSystemSize * 1000);
         const perWattAmount = Math.round(watts * numPerWattRate);
         const beforeGst = Math.round(perWattAmount / (1 + rates.gstRate));
+        const shownMaterial = Math.round(totalMaterialCost);
+        const shownExtras = Math.round(totalAdditionalCharges);
+        const shownCommission = Math.round(commissionAmount);
+        const shownDiscount = Math.round(discountAmount);
+        const baseProfit = Math.round(profitAmount);
+        const adjustedProfit = beforeGst - shownMaterial - shownExtras - shownCommission + shownDiscount;
         totalBeforeGST = beforeGst;
         totalGSTAmount = perWattAmount - beforeGst;
         totalAmount = perWattAmount;
-        perWattPricing = { watts, rate: numPerWattRate, amount: perWattAmount };
+        perWattPricing = {
+            watts,
+            rate: numPerWattRate,
+            amount: perWattAmount,
+            baseProfit,
+            profitAdjustment: adjustedProfit - baseProfit
+        };
     }
 
     const finalAmount = totalAmount;
@@ -2455,12 +2467,14 @@ function calculateQuotation(params) {
             
             // Summary totals
             totalMaterialCost: Math.round(totalMaterialCost),
-            profitAmount: Math.round(profitAmount),
+            profitAmount: perWattPricing
+                ? perWattPricing.baseProfit + perWattPricing.profitAdjustment
+                : Math.round(profitAmount),
             totalBeforeGST: Math.round(totalBeforeGST),
             totalGSTAmount: Math.round(totalGSTAmount),
             totalAmount: Math.round(totalAmount),
-            commissionAmount: perWattPricing ? 0 : Math.round(commissionAmount),
-            discountAmount: perWattPricing ? 0 : Math.round(discountAmount),
+            commissionAmount: Math.round(commissionAmount),
+            discountAmount: Math.round(discountAmount),
             componentFinal,
             finalAmount: Math.round(finalAmount)
         },
@@ -2710,8 +2724,14 @@ function displayQuotation(data) {
             </tr>
             <tr>
                 <td>Profit (${q.panelConfig.name.split(' (')[0]}, ${q.systemSize}kW)</td>
-                <td>${formatCurrency(q.breakdown.profitAmount)}</td>
+                <td>${formatCurrency(q.perWattPricing ? q.perWattPricing.baseProfit : q.breakdown.profitAmount)}</td>
             </tr>
+            ${q.perWattPricing ? `
+            <tr>
+                <td>Adjusted in profit (${q.perWattPricing.watts.toLocaleString('en-IN')} W × ₹${q.perWattPricing.rate})</td>
+                <td>${q.perWattPricing.profitAdjustment < 0 ? '− ' : '+ '}${formatCurrency(Math.abs(q.perWattPricing.profitAdjustment))}</td>
+            </tr>
+            ` : ''}
             <tr>
                 <td>Transportation</td>
                 <td>${formatCurrency(q.breakdown.transportation)}</td>
@@ -2734,20 +2754,6 @@ function displayQuotation(data) {
                 <td>Civil Work Material</td>
                 <td>${formatCurrency(q.breakdown.civilWorkMaterial)}</td>
             </tr>
-            ${q.perWattPricing ? `
-            <tr class="subtotal">
-                <td>Component calculation (reference)</td>
-                <td>${formatCurrency(q.breakdown.componentFinal)}</td>
-            </tr>
-            <tr>
-                <td>Per watt (${q.perWattPricing.watts.toLocaleString('en-IN')} W × ₹${q.perWattPricing.rate})</td>
-                <td>${formatCurrency(q.perWattPricing.amount)}</td>
-            </tr>
-            <tr class="final-amount">
-                <td><strong>Final Amount (GST included)</strong></td>
-                <td><strong>${formatCurrency(q.breakdown.finalAmount)}</strong></td>
-            </tr>
-            ` : `
             <tr>
                 <td>Sales Category (S)</td>
                 <td>+ ${formatCurrency(q.breakdown.commissionAmount)}</td>
@@ -2765,10 +2771,9 @@ function displayQuotation(data) {
                 <td>${formatCurrency(q.breakdown.totalGSTAmount)}</td>
             </tr>
             <tr class="final-amount">
-                <td><strong>Final Amount</strong></td>
+                <td><strong>Final Amount${q.perWattPricing ? ' (GST included)' : ''}</strong></td>
                 <td><strong>${formatCurrency(q.breakdown.finalAmount)}</strong></td>
             </tr>
-            `}
         `;
     } else {
         // CUSTOMER VIEW - only price + GST + discount
