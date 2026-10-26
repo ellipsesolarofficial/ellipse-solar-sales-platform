@@ -3616,31 +3616,3 @@ function sendToWhatsApp(phoneNumber) {
         sendWhatsApp(phoneNumber, window.currentQuotation);
     }
 }
-
-function renderSiteSavings() {
-    const billInput = document.getElementById('siteBill');
-    const results = document.getElementById('siteResults');
-    if (!billInput || !results) return;
-    const bill = Math.max(0, parseInt(billInput.value, 10) || 0);
-    const monthly = Math.round(bill * 0.85);
-    const annual = monthly * 12;
-    const kw = Math.max(1, Math.ceil(((bill / 7.5) / 30) / 5.15));
-    const net = Math.max(0, kw * 55000 - 95000 - 17000);
-    const paybackYears = annual > 0 ? net / annual : 0;
-    const payback = paybackYears < 1 ? 'Under 1 year' : paybackYears.toFixed(1) + ' years';
-    const money = (n) => '₹' + n.toLocaleString('en-IN');
-    results.innerHTML = [
-        ['Monthly savings', money(monthly)],
-        ['Annual savings', money(annual)],
-        ['25-year savings', '₹' + (annual * 25 / 100000).toFixed(1) + ' Lakh'],
-        ['Payback', payback],
-        ['Central subsidy', money(95000)],
-        ['Rajasthan subsidy', money(17000)]
-    ].map(([label, value]) => `<div><small>${label}</small><strong>${value}</strong></div>`).join('');
-}
-
-const siteBillInput = document.getElementById('siteBill');
-if (siteBillInput) {
-    siteBillInput.addEventListener('input', renderSiteSavings);
-    renderSiteSavings();
-}
