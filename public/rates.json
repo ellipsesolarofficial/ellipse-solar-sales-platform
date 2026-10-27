@@ -87,7 +87,7 @@
       "name": "Adani",
       "monoperc": {
         "dcr": {
-          "pricePerWatt": 23.25
+          "pricePerWatt": 22.6
         },
         "nonDcr": {
           "pricePerWatt": 14.7
@@ -102,10 +102,13 @@
       },
       "topcon": {
         "dcr": {
-          "pricePerWatt": 26.75
+          "pricePerWatt": 25.6
         },
         "nonDcr": {
-          "pricePerWatt": 13.4
+          "pricePerWatt": 13.4,
+          "pricePerWattByCapacity": {
+            "630": 12.6
+          }
         },
         "capacities": [
           610,

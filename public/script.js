@@ -1935,7 +1935,12 @@ function calculateQuotation(params) {
     
     // Get panel brand config
     const brandConfig = rates.solarPanels[panelBrand] || rates.solarPanels['ina'];
-    const rateFor = key => brandConfig[techKey]?.[key]?.pricePerWatt || 24;
+    const rateFor = key => {
+        const bucket = (brandConfig[techKey] && brandConfig[techKey][key]) || {};
+        const byCapacity = bucket.pricePerWattByCapacity || {};
+        const specific = byCapacity[String(numPanelCapacity)];
+        return specific != null ? specific : (bucket.pricePerWatt || 24);
+    };
 
     const kitCatalog = brandConfig.kitBased ? getKitCatalog(panelBrand) : null;
     const kit = brandConfig.kitBased
