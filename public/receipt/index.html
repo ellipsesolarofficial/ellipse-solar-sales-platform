@@ -108,13 +108,20 @@ small.warn{color:#B42318}
     <div class="g"><label for="towards">Payment Towards</label>
       <select id="towards"><option>Advance / Booking Amount</option><option>Part Payment</option><option>Balance Payment</option><option>Full &amp; Final Payment</option></select></div>
 
-    <h3>Project <span style="text-transform:none;font-weight:400">(optional)</span></h3>
+    <h3>Project</h3>
     <div class="row">
+      <div class="g"><label for="brand">Panel Brand <span class="req">*</span></label>
+        <select id="brand"><option value="">Select</option><option>INA</option><option>Adani</option><option>Waaree</option><option>Tata</option><option>Eastman</option><option>Luminous</option><option>Panasonic</option><option>Havells</option><option>Reliance</option><option>Renewsys</option><option>Premier</option></select></div>
       <div class="g"><label for="kw">System Size (kW)</label><input id="kw" type="number" min="0" step="0.01" placeholder="3"></div>
-      <div class="g"><label for="total">Total Order Value (₹)</label><input id="total" type="number" min="0" step="1" placeholder="180000"></div>
     </div>
     <div class="row">
+      <div class="g"><label for="total">Total Order Value (₹)</label><input id="total" type="number" min="0" step="1" placeholder="180000"></div>
       <div class="g"><label for="paid">Previously Paid (₹)</label><input id="paid" type="number" min="0" step="1" placeholder="0"></div>
+    </div>
+
+    <h3>Sales</h3>
+    <div class="row">
+      <div class="g"><label for="sp">Sales Person <span class="req">*</span></label><input id="sp" placeholder="Your name"></div>
       <div class="g"><label for="rno">Receipt No.</label><input id="rno"></div>
     </div>
     <div class="g"><label for="remarks">Remarks</label><textarea id="remarks" rows="1" placeholder="Optional"></textarea></div>
@@ -215,12 +222,15 @@ function data() {
   const d = {
     name: $('name').value.trim().replace(/\s+/g, ' '), address: $('address').value.trim(),
     phone: $('phone').value.replace(/\D/g, ''), amount, rno: $('rno').value.trim(), date: fmtDate($('date').value),
+    sp: $('sp').value.trim().replace(/\s+/g, ' '), brand: $('brand').value,
     rows: []
   };
   d.rows.push(['Payment Towards', $('towards').value]);
   d.rows.push(['Payment Mode', $('mode').value]);
   if ($('ref').value.trim()) d.rows.push(['Txn / Cheque No.', $('ref').value.trim()]);
   if (kw) d.rows.push(['Solar System', `${kw} kW Rooftop Solar System`]);
+  if (d.brand) d.rows.push(['Panel Brand', d.brand]);
+  if (d.sp) d.rows.push(['Sales Person', d.sp]);
   if (total) {
     d.rows.push(['Total Order Value', 'Rs. ' + inr(total)]);
     if (paid) d.rows.push(['Previously Paid', 'Rs. ' + inr(paid)]);
@@ -244,7 +254,7 @@ function render() {
   });
   $('pAmt').textContent = '₹' + inr(d.amount);
   $('pWords').textContent = d.words;
-  $('nameWarn').hidden = !/[^\x00-\x7F]/.test(d.name + d.address + $('remarks').value);
+  $('nameWarn').hidden = !/[^\x00-\x7F]/.test(d.name + d.address + d.sp + $('remarks').value);
 }
 
 // ---------- PDF (A4, drawn with jsPDF) ----------
@@ -288,7 +298,7 @@ function buildPDF(d) {
   y += 8;
   doc.setFontSize(10).setDrawColor(228, 231, 236).setLineWidth(.3);
   d.rows.forEach(([k, v]) => {
-    const vl = doc.splitTextToSize(v, R - L - 72), h = 5 + vl.length * 4.6;
+    const vl = doc.splitTextToSize(v, R - L - 72), h = 4 + vl.length * 4.6;
     doc.setTextColor(...MD).setFont('helvetica', 'normal').text(k, L + 2, y + 5.6);
     doc.setTextColor(...DK).setFont('helvetica', k === 'Balance Due' ? 'bold' : 'normal').text(vl, L + 72, y + 5.6);
     y += h; doc.line(L, y, R, y);
@@ -302,8 +312,11 @@ function buildPDF(d) {
   doc.setFont('helvetica', 'italic').setFontSize(9.5).setTextColor(...MD).text(wl, L + 5, y + 16);
   y += bh + 10;
 
-  const sx = 118, sw = 70, sh = sw * A.SEAL.h / A.SEAL.w;
-  if (y + sh + 8 > 276) { doc.addPage(); y = 20; }
+  // Shrink the seal (down to 50 mm) to keep it on page 1; use a new page only if it still won't fit
+  const ratio = A.SEAL.h / A.SEAL.w;
+  let sw = Math.min(70, (268 - y) / ratio);
+  if (sw < 50) { doc.addPage(); y = 20; sw = 70; }
+  const sx = 118, sh = sw * ratio;
   doc.setFont('helvetica', 'bold').setFontSize(10).setTextColor(...DK).text('For, ELLIPSE SOLAR', sx, y);
   doc.addImage(A.SEAL.src, 'PNG', sx, y + 2, sw, sh);
   doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(85).text(CO.signer, sx, y + sh + 6);
@@ -321,6 +334,8 @@ function ready() {
   const d = data();
   if (!d.name) { $('name').focus(); toast('Enter the customer name'); return null; }
   if (!d.amount) { $('amount').focus(); toast('Enter the amount'); return null; }
+  if (!d.brand) { $('brand').focus(); toast('Select the panel brand'); return null; }
+  if (!d.sp) { $('sp').focus(); toast('Enter the sales person name'); return null; }
   if (!d.date) { $('date').valueAsDate = new Date(); d.date = fmtDate($('date').value); }
   d.file = d.name.replace(/[\\/:*?"<>|]/g, '').trim() + ' Receipt.pdf';
   return d;
@@ -333,7 +348,7 @@ function waNumber(raw) {
 
 function waMessage(d) {
   return `Namaste *${d.name}* ji,\n\nThank you for your payment to *Ellipse Solar*. Here is your receipt:\n\n` +
-    `Receipt No: ${d.rno}\nDate: ${d.date}\nAmount: *Rs. ${inr(d.amount)}*\nMode: ${$('mode').value}\nTowards: ${$('towards').value}\n\n` +
+    `Receipt No: ${d.rno}\nDate: ${d.date}\nAmount: *Rs. ${inr(d.amount)}*\nMode: ${$('mode').value}\nTowards: ${$('towards').value}\nPanel Brand: ${d.brand}\nSales Person: ${d.sp}\n\n` +
     `The PDF receipt (${d.file}) is attached.\n\n_Ellipse Solar - Powering a Greener Tomorrow_`;
 }
 
@@ -369,6 +384,9 @@ $('share').onclick = async () => {
 // ---------- init ----------
 $('date').valueAsDate = new Date();
 $('rno').value = nextRno();
+// Sales person: from the link (?salesperson=Name), else the last name used on this device
+$('sp').value = new URLSearchParams(location.search).get('salesperson') || store.get('es_sp') || '';
+$('sp').addEventListener('change', () => store.set('es_sp', $('sp').value.trim()));
 $('f').addEventListener('input', render);
 render();
 </script>
