@@ -11,14 +11,16 @@
 :root{--p:#E8621F;--pd:#D4550F;--pl:#FEF3ED;--t:#2C3345;--tm:#5A6376;--tl:#8B94A8;--bg:#F7F9FC;--b:#E4E7EC;--bd:#D0D5DD;--wa:#25D366}
 *{margin:0;padding:0;box-sizing:border-box}
 [hidden]{display:none!important}
+body[data-mode=extra] .solar-only,body[data-mode=solar] .extra-only{display:none!important}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--t);line-height:1.5;-webkit-font-smoothing:antialiased}
 header{background:#fff;padding:16px 32px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:16px}
 header img{height:56px}
 header h1{font-size:1.1rem;font-weight:600;letter-spacing:-.02em}
-main{display:grid;grid-template-columns:440px 1fr;min-height:calc(100vh - 89px)}
+main{display:grid;grid-template-columns:460px 1fr;min-height:calc(100vh - 89px)}
 .form{background:#fff;padding:32px;border-right:1px solid var(--b)}
-.form h2{font-size:1.35rem;font-weight:600;margin-bottom:24px;letter-spacing:-.02em}
-h3{color:var(--tm);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin:8px 0 14px}
+.form h2{font-size:1.35rem;font-weight:600;margin-bottom:18px;letter-spacing:-.02em}
+h3{color:var(--tm);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 14px;display:flex;align-items:center;gap:8px}
+h3 .opt{font-size:.68rem;font-weight:600;color:var(--tl);background:var(--bg);border:1px solid var(--b);padding:1px 7px;border-radius:99px;letter-spacing:.03em}
 .g{margin-bottom:16px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 label{display:block;margin-bottom:6px;font-weight:500;font-size:.9rem}
@@ -29,6 +31,36 @@ input:hover,select:hover,textarea:hover{border-color:var(--bd)}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px var(--pl)}
 small{display:block;margin-top:5px;color:var(--tl);font-size:.8rem}
 small.warn{color:#B42318}
+small.hint{margin:-8px 0 14px}
+/* Receipt type switch */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.seg label{margin:0;cursor:pointer;position:relative}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg span{display:block;height:100%;padding:11px 13px;border:1px solid var(--b);border-radius:10px;transition:.15s}
+.seg span b{display:block;font-size:.92rem;font-weight:600}
+.seg span small{margin-top:2px;font-weight:400}
+.seg label:hover span{border-color:var(--bd)}
+.seg input:checked+span{border-color:var(--p);background:var(--pl);box-shadow:inset 0 0 0 1px var(--p)}
+.seg input:focus-visible+span{outline:3px solid #F7CDB5;outline-offset:1px}
+/* Extra charge items */
+.items{display:grid;gap:10px}
+.item{border:1px solid var(--b);border-radius:10px;padding:10px 12px 12px;background:#FCFCFD}
+.item-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.tag{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--p);background:var(--pl);padding:2px 9px;border-radius:99px}
+.x{border:none;background:none;color:var(--tl);font-size:1.35rem;line-height:1;cursor:pointer;padding:2px 7px;border-radius:6px}
+.x:hover{color:#B42318;background:#FEF3F2}
+.r2{display:grid;grid-template-columns:1.6fr 1fr;gap:8px}
+.r4{display:grid;grid-template-columns:.75fr 1fr .75fr 1.15fr;gap:8px;margin-top:8px}
+.r4 label{font-size:.74rem;color:var(--tm);margin-bottom:3px;white-space:nowrap}
+.item input,.item select{padding:9px 10px;font-size:.9rem}
+.i-calc{margin-top:8px;font-size:.84rem;color:var(--tm)}
+.i-calc.ok{color:var(--t);font-weight:600}
+.empty{font-size:.86rem;color:var(--tm);background:var(--bg);border:1px dashed var(--bd);border-radius:10px;padding:12px;text-align:center}
+.adds{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}
+.chip{border:1px dashed var(--bd);background:#fff;border-radius:8px;padding:8px 12px;font:inherit;font-size:.86rem;font-weight:600;color:var(--t);cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--p);border-style:solid;color:var(--p);background:var(--pl)}
+.itot{display:flex;justify-content:space-between;align-items:baseline;padding:10px 12px;background:var(--pl);border-radius:8px;font-size:.9rem;margin-bottom:8px}
+.itot b{color:var(--p);font-size:1rem}
 .actions{display:grid;gap:10px;margin-top:24px}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border:none;border-radius:8px;font:inherit;font-weight:600;font-size:.95rem;cursor:pointer;transition:.15s;color:#fff;background:var(--p)}
 .btn:hover{background:var(--pd)}
@@ -52,8 +84,23 @@ small.warn{color:#B42318}
 .r-table{width:100%;border-collapse:collapse;margin:16px 0}
 .r-table td{padding:8px 10px;border-bottom:1px solid var(--b);font-size:.86rem;vertical-align:top}
 .r-table td:first-child{color:var(--tm);width:42%}
+.r-cap{margin:20px 0 6px;font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--tm);text-transform:uppercase}
+.r-it{width:100%;border-collapse:collapse}
+.r-it th{background:var(--bg);color:var(--tm);font-size:.74rem;font-weight:600;text-align:left;padding:6px 10px}
+.r-it td{padding:8px 10px;border-bottom:1px solid var(--b);font-size:.86rem;vertical-align:top}
+.r-it th:first-child,.r-it td:first-child{color:var(--tm);width:34px}
+.r-it th:last-child,.r-it td:last-child{text-align:right;white-space:nowrap}
+.r-it td small{margin:2px 0 0;color:var(--tm);font-size:.76rem}
+.r-tot{display:grid;grid-template-columns:37% 1fr;gap:24px;align-items:start;margin-top:16px}
+.r-tot.solo{display:block}
+.r-sum{width:100%;border-collapse:collapse}
+.r-sum td{padding:6px 10px;border-bottom:1px solid var(--b);font-size:.86rem;color:var(--tm)}
+.r-sum td:last-child{text-align:right;white-space:nowrap;color:var(--t)}
+.r-sum tr.b td{font-weight:700;color:var(--t)}
 .r-amt{background:var(--pl);border:1px solid #F7CDB5;border-radius:8px;padding:14px 16px}
 .r-amt div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.r-tot:not(.solo) .r-amt div{flex-direction:column;gap:0}
+.r-tot:not(.solo) .r-amt b{font-size:1.35rem;white-space:nowrap}
 .r-amt b{font-size:1.5rem;color:var(--p)}
 .r-amt p{font-size:.82rem;color:var(--tm);margin-top:4px;font-style:italic}
 .r-sign{display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;gap:12px}
@@ -66,24 +113,29 @@ small.warn{color:#B42318}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(100px);background:var(--t);color:#fff;padding:10px 18px;border-radius:8px;font-size:.88rem;transition:.25s;z-index:9}
 .toast.on{transform:translateX(-50%)}
 @media(max-width:960px){main{grid-template-columns:1fr}.form{border-right:none;border-bottom:1px solid var(--b)}}
-@media(max-width:560px){header{padding:12px 16px}header img{height:42px}.form,.preview{padding:20px 16px}.paper{padding:20px 16px}.r-head img{height:36px}.r-co b{font-size:1.2rem}.r-sign img{width:150px}.row{grid-template-columns:1fr}}
+@media(max-width:560px){header{padding:12px 16px}header img{height:42px}.form,.preview{padding:20px 16px}.paper{padding:20px 16px}.r-head img{height:36px}.r-co b{font-size:1.2rem}.r-sign img{width:150px}.row{grid-template-columns:1fr}.r4{grid-template-columns:1fr 1fr}.r-tot{grid-template-columns:1fr;gap:12px}.r-tot .r-amt{order:2}}
 </style>
 </head>
-<body>
+<body data-mode="solar">
 <header>
   <img id="hdrLogo" alt="Ellipse Solar">
-  <h1>Payment Receipt Generator</h1>
+  <h1>Receipt Generator</h1>
 </header>
 
 <main>
 <section class="form">
   <h2>Generate Receipt</h2>
   <form id="f" autocomplete="off" onsubmit="return false">
+    <div class="seg" role="radiogroup" aria-label="Receipt type">
+      <label><input type="radio" name="type" value="solar" checked><span><b>Solar System Payment</b><small>Booking, part or final payment</small></span></label>
+      <label><input type="radio" name="type" value="extra"><span><b>Extra Work / Charges</b><small>Pipes, labour, transport, other</small></span></label>
+    </div>
+
     <h3>Customer</h3>
     <div class="g">
       <label for="name">Customer Name <span class="req">*</span></label>
       <input id="name" placeholder="e.g. Shantna Devi" required>
-      <small id="nameWarn" class="warn" hidden>Please type the name in English letters (Hindi letters won't print in the PDF).</small>
+      <small id="nameWarn" class="warn" hidden>Please type in English letters (Hindi letters won't print in the PDF).</small>
     </div>
     <div class="g">
       <label for="address">Address</label>
@@ -95,27 +147,46 @@ small.warn{color:#B42318}
       <small>10-digit number. 91 is added automatically.</small>
     </div>
 
+    <h3>Site / Project</h3>
+    <div class="row">
+      <div class="g"><label for="kw">System Size (kW)</label><input id="kw" type="number" min="0" step="0.01" placeholder="3"></div>
+      <div class="g"><label for="brand">Panel Brand <span class="req solar-only">*</span></label>
+        <select id="brand"><option value="">Select</option><option>INA</option><option>Adani</option><option>Waaree</option><option>Tata</option><option>Eastman</option><option>Luminous</option><option>Panasonic</option><option>Havells</option><option>Reliance</option><option>Renewsys</option><option>Premier</option></select></div>
+    </div>
+    <div class="g solar-only">
+      <label for="total">Total Order Value (₹)</label><input id="total" type="number" min="0" step="1" placeholder="180000">
+      <small>Solar system price as per quotation (without extras).</small>
+    </div>
+
+    <h3>Extra Charges <span class="opt solar-only">Optional</span></h3>
+    <small class="hint solar-only">Anything used beyond the quotation. It is added to the order value.</small>
+    <div id="items" class="items"></div>
+    <p id="itemsEmpty" class="empty extra-only">Add what was extra at the site.</p>
+    <div class="adds">
+      <button type="button" class="chip" data-add="pipe">+ Pipe</button>
+      <button type="button" class="chip" data-add="labour">+ Labour</button>
+      <button type="button" class="chip" data-add="transport">+ Transport</button>
+      <button type="button" class="chip" data-add="other">+ Other</button>
+    </div>
+    <div class="itot" id="itot" hidden><span>Total extra charges</span><b id="itotV"></b></div>
+    <datalist id="pipeTypes">
+      <option value="GI Pipe 60x40 mm"><option value="GI Pipe 40x40 mm"><option value="GI Pipe 80x40 mm"><option value="GI Pipe 50x50 mm"><option value="GI Round Pipe 2 inch"><option value="GI Round Pipe 1.5 inch">
+    </datalist>
+
     <h3>Payment</h3>
     <div class="row">
-      <div class="g"><label for="amount">Amount (₹) <span class="req">*</span></label><input id="amount" type="number" min="1" step="1" placeholder="50000"></div>
+      <div class="g"><label for="amount">Amount Received (₹) <span class="req solar-only">*</span></label><input id="amount" type="number" min="0" step="1" placeholder="50000"></div>
       <div class="g"><label for="date">Date</label><input id="date" type="date"></div>
     </div>
+    <small class="hint extra-only">Not paid yet? Leave it blank. The PDF then shows the amount due.</small>
     <div class="row">
       <div class="g"><label for="mode">Payment Mode</label>
         <select id="mode"><option>UPI</option><option>Cash</option><option>Bank Transfer (NEFT/RTGS/IMPS)</option><option>Cheque</option><option>Loan Disbursement</option></select></div>
       <div class="g"><label for="ref">Txn / Cheque No.</label><input id="ref" placeholder="Optional"></div>
     </div>
-    <div class="g"><label for="towards">Payment Towards</label>
-      <select id="towards"><option>Advance / Booking Amount</option><option>Part Payment</option><option>Balance Payment</option><option>Full &amp; Final Payment</option></select></div>
-
-    <h3>Project</h3>
     <div class="row">
-      <div class="g"><label for="brand">Panel Brand <span class="req">*</span></label>
-        <select id="brand"><option value="">Select</option><option>INA</option><option>Adani</option><option>Waaree</option><option>Tata</option><option>Eastman</option><option>Luminous</option><option>Panasonic</option><option>Havells</option><option>Reliance</option><option>Renewsys</option><option>Premier</option></select></div>
-      <div class="g"><label for="kw">System Size (kW)</label><input id="kw" type="number" min="0" step="0.01" placeholder="3"></div>
-    </div>
-    <div class="row">
-      <div class="g"><label for="total">Total Order Value (₹)</label><input id="total" type="number" min="0" step="1" placeholder="180000"></div>
+      <div class="g solar-only"><label for="towards">Payment Towards</label>
+        <select id="towards"><option>Advance / Booking Amount</option><option>Part Payment</option><option>Balance Payment</option><option>Full &amp; Final Payment</option></select></div>
       <div class="g"><label for="paid">Previously Paid (₹)</label><input id="paid" type="number" min="0" step="1" placeholder="0"></div>
     </div>
 
@@ -145,18 +216,25 @@ small.warn{color:#B42318}
         <p>Plot No. 14, AB Heights, Baba Market, Teachers Colony, DCM, Ajmer Road, Jaipur - 302021<br>GSTIN: 08GSYPM5879P1Z0 | Mob. 9216054155, 9216054156</p>
       </div>
     </div>
-    <div class="r-title">PAYMENT RECEIPT</div>
-    <div class="r-meta"><span>Receipt No: <b id="pRno"></b></span><span>Date: <b id="pDate"></b></span></div>
-    <div class="r-from">Received with thanks from</div>
+    <div class="r-title" id="pTitle">PAYMENT RECEIPT</div>
+    <div class="r-meta"><span><span id="pNoL">Receipt No</span>: <b id="pRno"></b></span><span>Date: <b id="pDate"></b></span></div>
+    <div class="r-from" id="pFrom">Received with thanks from</div>
     <div class="r-name" id="pName">—</div>
     <div class="r-sub" id="pAddr"></div>
     <table class="r-table"><tbody id="pRows"></tbody></table>
-    <div class="r-amt">
-      <div><span>Amount Received</span><b id="pAmt">₹0.00</b></div>
-      <p id="pWords"></p>
+    <div id="pItemsWrap" hidden>
+      <div class="r-cap">Extra Work / Charges</div>
+      <table class="r-it"><thead><tr><th>#</th><th>Item</th><th>Amount</th></tr></thead><tbody id="pItems"></tbody></table>
+    </div>
+    <div class="r-tot" id="pTot">
+      <div class="r-amt">
+        <div><span id="pAmtL">Amount Received</span><b id="pAmt">₹0.00</b></div>
+        <p id="pWords"></p>
+      </div>
+      <table class="r-sum" id="pSumT"><tbody id="pSum"></tbody></table>
     </div>
     <div class="r-sign">
-      <div class="note">This is a computer generated receipt.</div>
+      <div class="note" id="pNote">This is a computer generated receipt.</div>
       <div class="s"><b>For, ELLIPSE SOLAR</b><img id="pSeal" alt="Ellipse Solar sign and seal"><small>Saurav Gautam, Authorized Signatory</small></div>
     </div>
     <div class="r-foot">Thank you for choosing Ellipse Solar — Powering a Greener Tomorrow</div>
@@ -177,7 +255,11 @@ $('pSeal').src = A.SEAL.src;
 
 // ---------- helpers ----------
 const num = v => Math.max(0, parseFloat(v) || 0);
+const r2 = n => Math.round(n * 100) / 100;
 const inr = n => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const rup = s => s.replace(/Rs\. /g, '₹');
+const clean = s => s.trim().replace(/\s+/g, ' ');
 const fmtDate = s => { if (!s) return ''; const [y, m, d] = s.split('-'); return `${d}/${m}/${y}`; };
 const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } },
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
@@ -216,52 +298,162 @@ function commitRno() {
   $('rno').value = nextRno();
 }
 
+// ---------- extra charge items ----------
+const KINDS = {
+  pipe:      { tag: 'Pipe',      title: 'Extra Pipe (Structure)' },
+  labour:    { tag: 'Labour',    title: 'Extra Labour',   ph: 'Details (optional), e.g. 2 labourers x 1 day' },
+  transport: { tag: 'Transport', title: 'Transportation', ph: 'Details (optional), e.g. extra trip to site' },
+  other:     { tag: 'Other',     title: 'Other Charges',  ph: 'What was extra? e.g. Extra DC wire 20 m' }
+};
+let uid = 0;
+
+function addItem(kind) {
+  const k = KINDS[kind], el = document.createElement('div'), id = 'it' + (++uid);
+  el.className = 'item'; el.dataset.kind = kind;
+  el.innerHTML = `<div class="item-h"><span class="tag">${k.tag}</span><button type="button" class="x" title="Remove" aria-label="Remove ${k.tag} item">&times;</button></div>` +
+    (kind === 'pipe'
+      ? `<input class="i-desc" list="pipeTypes" placeholder="Pipe type / size, e.g. GI Pipe 60x40 mm" aria-label="Pipe type">
+         <div class="r4">
+           <div><label for="${id}n">Nos</label><input id="${id}n" class="i-nos" type="number" min="1" step="1" value="1"></div>
+           <div><label for="${id}l">Length each</label><input id="${id}l" class="i-len" type="number" min="0" step="any" placeholder="3"></div>
+           <div><label for="${id}u">Unit</label><select id="${id}u" class="i-unit"><option value="ft">ft</option><option value="m">m</option></select></div>
+           <div><label for="${id}r" class="i-rl">Rate / ft (₹)</label><input id="${id}r" class="i-rate" type="number" min="0" step="any" placeholder="150"></div>
+         </div>
+         <div class="i-calc"></div>`
+      : `<div class="r2"><input class="i-desc" placeholder="${k.ph}" aria-label="${k.tag} details"><input class="i-amt" type="number" min="0" step="1" placeholder="Amount ₹" aria-label="${k.tag} amount"></div>`);
+  $('items').append(el);
+  el.querySelector(kind === 'labour' || kind === 'transport' ? '.i-amt' : '.i-desc').focus();
+  render();
+}
+
+function readItems() {
+  return [...$('items').children].map(el => {
+    const q = s => el.querySelector(s), kind = el.dataset.kind, desc = clean(q('.i-desc').value);
+    if (kind === 'pipe') {
+      const nos = num(q('.i-nos').value) || 1, len = num(q('.i-len').value), unit = q('.i-unit').value, rate = num(q('.i-rate').value);
+      const tot = r2(nos * len), amount = r2(tot * rate);
+      let detail = '';
+      if (len) detail = (nos === 1 ? `${nf(len)} ${unit}` : `${nf(nos)} nos x ${nf(len)} ${unit} = ${nf(tot)} ${unit}`) + (rate ? ` @ Rs. ${nf(rate)}/${unit}` : '');
+      const bad = !amount && (len || rate || desc) ? (len ? q('.i-rate') : q('.i-len')) : null;
+      return { el, kind, unit, title: desc || KINDS.pipe.title, detail, amount, bad };
+    }
+    const amount = r2(num(q('.i-amt').value));
+    return kind === 'other'
+      ? { el, kind, title: desc || KINDS.other.title, detail: '', amount, bad: !amount && desc ? q('.i-amt') : null }
+      : { el, kind, title: KINDS[kind].title, detail: desc, amount, bad: !amount && desc ? q('.i-amt') : null };
+  });
+}
+
 // ---------- data ----------
 function data() {
-  const amount = num($('amount').value), total = num($('total').value), paid = num($('paid').value), kw = num($('kw').value);
+  const solar = document.querySelector('input[name=type]:checked').value === 'solar';
+  const all = readItems(), items = all.filter(i => i.amount > 0);
+  const amount = r2(num($('amount').value)), total = solar ? r2(num($('total').value)) : 0, paid = r2(num($('paid').value)), kw = num($('kw').value);
+  const extras = r2(items.reduce((s, i) => s + i.amount, 0));
+  // What the customer owes in total: solar = order value + extras, extra work = extras only
+  const owed = solar ? (total ? r2(total + extras) : 0) : extras;
+  const balance = Math.max(0, r2(owed - paid - amount));
+  const ref = $('ref').value.trim(), remarks = $('remarks').value.trim();
   const d = {
-    name: $('name').value.trim().replace(/\s+/g, ' '), address: $('address').value.trim(),
-    phone: $('phone').value.replace(/\D/g, ''), amount, rno: $('rno').value.trim(), date: fmtDate($('date').value),
-    sp: $('sp').value.trim().replace(/\s+/g, ' '), brand: $('brand').value,
-    rows: []
+    mode: solar ? 'solar' : 'extra', solar, all, items, amount, extras, owed, balance,
+    name: clean($('name').value), address: $('address').value.trim(),
+    phone: $('phone').value.replace(/\D/g, ''), rno: $('rno').value.trim(), date: fmtDate($('date').value),
+    sp: clean($('sp').value), brand: $('brand').value,
+    isReceipt: amount > 0, info: [], sum: []
   };
-  d.rows.push(['Payment Towards', $('towards').value]);
-  d.rows.push(['Payment Mode', $('mode').value]);
-  if ($('ref').value.trim()) d.rows.push(['Txn / Cheque No.', $('ref').value.trim()]);
-  if (kw) d.rows.push(['Solar System', `${kw} kW Rooftop Solar System`]);
-  if (d.brand) d.rows.push(['Panel Brand', d.brand]);
-  if (d.sp) d.rows.push(['Sales Person', d.sp]);
-  if (total) {
-    d.rows.push(['Total Order Value', 'Rs. ' + inr(total)]);
-    if (paid) d.rows.push(['Previously Paid', 'Rs. ' + inr(paid)]);
-    d.rows.push(['Balance Due', 'Rs. ' + inr(Math.max(0, total - paid - amount))]);
+
+  if (d.isReceipt) {
+    d.info.push(['Payment Towards', solar ? $('towards').value : 'Extra / Additional Work']);
+    d.info.push(['Payment Mode', $('mode').value]);
+    if (ref) d.info.push(['Txn / Cheque No.', ref]);
   }
-  if ($('remarks').value.trim()) d.rows.push(['Remarks', $('remarks').value.trim()]);
-  d.words = toWords(amount);
+  if (kw) d.info.push(['Solar System', `${nf(kw)} kW Rooftop Solar System`]);
+  if (d.brand) d.info.push(['Panel Brand', d.brand]);
+  if (d.sp) d.info.push(['Sales Person', d.sp]);
+  if (remarks) d.info.push(['Remarks', remarks]);
+
+  if (solar) {
+    if (extras) {
+      if (total) d.sum.push(['Solar System Value', total]);
+      d.sum.push(['Extra Charges', extras]);
+      if (total) d.sum.push(['Total Order Value', owed, 1]);
+    } else if (total) d.sum.push(['Total Order Value', total]);
+  } else if (extras) d.sum.push(['Total Extra Charges', extras, 1]);
+  if (owed && (paid || amount)) {
+    if (paid) d.sum.push(['Previously Paid', paid]);
+    if (amount) d.sum.push(['Received Now', amount]);
+    d.sum.push(['Balance Due', balance, 1]);
+  }
+
+  d.title = d.isReceipt ? 'PAYMENT RECEIPT' : 'PAYMENT DUE';
+  d.boxLabel = d.isReceipt ? 'Amount Received' : 'Amount Due';
+  d.boxAmt = d.isReceipt ? amount : balance;
+  d.words = toWords(d.boxAmt);
   return d;
 }
 
 function render() {
   const d = data();
+  document.body.dataset.mode = d.mode;
+  $('amount').placeholder = d.solar ? '50000' : '0';
+
+  // Form: item calculations and totals
+  d.all.forEach(it => {
+    if (it.kind !== 'pipe') return;
+    it.el.querySelector('.i-rl').textContent = `Rate / ${it.unit} (₹)`;
+    const c = it.el.querySelector('.i-calc');
+    c.textContent = it.amount ? `${rup(it.detail)} = ₹${inr(it.amount)}` : 'Amount = Nos × Length × Rate';
+    c.classList.toggle('ok', !!it.amount);
+  });
+  $('itemsEmpty').hidden = d.all.length > 0;
+  $('itot').hidden = !d.extras;
+  $('itotV').textContent = '₹' + inr(d.extras);
+
+  // Preview
+  $('pTitle').textContent = d.title;
+  $('pNoL').textContent = d.isReceipt ? 'Receipt No' : 'Ref No';
+  $('pFrom').textContent = d.isReceipt ? 'Received with thanks from' : 'Customer';
   $('pRno').textContent = d.rno; $('pDate').textContent = d.date;
   $('pName').textContent = d.name || '—';
   $('pAddr').textContent = [d.address, d.phone && 'Mob. ' + d.phone].filter(Boolean).join(' | ');
+
   $('pRows').innerHTML = '';
-  d.rows.forEach(([k, v]) => {
-    const tr = $('pRows').insertRow();
-    tr.insertCell().textContent = k; tr.insertCell().textContent = v.replace(/^Rs\. /, '₹');
-    if (k === 'Balance Due') tr.style.fontWeight = '600';
+  d.info.forEach(([k, v]) => { const tr = $('pRows').insertRow(); tr.insertCell().textContent = k; tr.insertCell().textContent = v; });
+
+  $('pItemsWrap').hidden = !d.items.length;
+  $('pItems').innerHTML = '';
+  d.items.forEach((it, i) => {
+    const tr = $('pItems').insertRow();
+    tr.insertCell().textContent = i + 1;
+    const c = tr.insertCell(); c.textContent = it.title;
+    if (it.detail) { const s = document.createElement('small'); s.textContent = rup(it.detail); c.append(s); }
+    tr.insertCell().textContent = '₹' + inr(it.amount);
   });
-  $('pAmt').textContent = '₹' + inr(d.amount);
+
+  $('pSumT').hidden = !d.sum.length;
+  $('pTot').classList.toggle('solo', !d.sum.length);
+  $('pSum').innerHTML = '';
+  d.sum.forEach(([k, v, b]) => {
+    const tr = $('pSum').insertRow(); if (b) tr.className = 'b';
+    tr.insertCell().textContent = k; tr.insertCell().textContent = '₹' + inr(v);
+  });
+
+  $('pAmtL').textContent = d.boxLabel;
+  $('pAmt').textContent = '₹' + inr(d.boxAmt);
   $('pWords').textContent = d.words;
-  $('nameWarn').hidden = !/[^\x00-\x7F]/.test(d.name + d.address + d.sp + $('remarks').value);
+  $('pNote').textContent = `This is a computer generated ${d.isReceipt ? 'receipt' : 'document'}.`;
+
+  const typed = d.name + d.address + d.sp + $('remarks').value + d.all.map(i => i.title + i.detail).join('');
+  $('nameWarn').hidden = !/[^\x00-\x7F]/.test(typed);
 }
 
 // ---------- PDF (A4, drawn with jsPDF) ----------
 function buildPDF(d) {
   const doc = new jspdf.jsPDF({ unit: 'mm', format: 'a4' }), W = 210, L = 18, R = W - 18;
-  const OR = [232, 98, 31], DK = [44, 51, 69], MD = [90, 99, 118];
+  const OR = [232, 98, 31], DK = [44, 51, 69], MD = [90, 99, 118], LN = [228, 231, 236];
   let y = 14;
+  const need = h => { if (y + h > 272) { doc.addPage(); y = 20; } };
+  const rule = (x1 = L) => doc.setDrawColor(...LN).setLineWidth(.3).line(x1, y, R, y);
 
   doc.addImage(A.LOGO.src, 'PNG', L, y - 4, 32, 32 * A.LOGO.h / A.LOGO.w);
   doc.setFont('helvetica', 'bold').setFontSize(22);
@@ -277,16 +469,17 @@ function buildPDF(d) {
   y += 7;
   doc.setFillColor(...OR).roundedRect(L, y, R - L, 10, 1.5, 1.5, 'F');
   doc.setFont('helvetica', 'bold').setFontSize(13).setTextColor(255);
-  doc.text('P A Y M E N T   R E C E I P T', W / 2, y + 6.8, { align: 'center' });
+  doc.text(d.title.split(' ').map(w => w.split('').join(' ')).join('   '), W / 2, y + 6.8, { align: 'center' });
 
-  y += 19;
+  y += 17;
+  const noL = d.isReceipt ? 'Receipt No: ' : 'Ref No: ';
   doc.setFontSize(10).setTextColor(...DK).setFont('helvetica', 'normal');
-  doc.text('Receipt No: ', L, y); doc.setFont('helvetica', 'bold').text(d.rno, L + doc.getTextWidth('Receipt No: '), y);
+  doc.text(noL, L, y); doc.setFont('helvetica', 'bold').text(d.rno, L + doc.getTextWidth(noL), y);
   doc.text(d.date, R, y, { align: 'right' });
   doc.setFont('helvetica', 'normal').text('Date: ', R - doc.getTextWidth(d.date) - 0.5, y, { align: 'right' });
 
-  y += 11;
-  doc.setFontSize(9).setTextColor(...MD).text('Received with thanks from', L, y);
+  y += 10;
+  doc.setFontSize(9).setTextColor(...MD).text(d.isReceipt ? 'Received with thanks from' : 'Customer', L, y);
   y += 7;
   doc.setFont('helvetica', 'bold').setFontSize(16).setTextColor(...DK).text(d.name, L, y);
   const sub = [d.address, d.phone && 'Mob. ' + d.phone].filter(Boolean).join('  |  ');
@@ -295,35 +488,86 @@ function buildPDF(d) {
     y += 6; doc.text(lines, L, y); y += (lines.length - 1) * 4.5;
   }
 
+  // Details (key / value)
   y += 8;
-  doc.setFontSize(10).setDrawColor(228, 231, 236).setLineWidth(.3);
-  d.rows.forEach(([k, v]) => {
-    const vl = doc.splitTextToSize(v, R - L - 72), h = 4 + vl.length * 4.6;
-    doc.setTextColor(...MD).setFont('helvetica', 'normal').text(k, L + 2, y + 5.6);
-    doc.setTextColor(...DK).setFont('helvetica', k === 'Balance Due' ? 'bold' : 'normal').text(vl, L + 72, y + 5.6);
-    y += h; doc.line(L, y, R, y);
+  d.info.forEach(([k, v]) => {
+    const vl = doc.setFont('helvetica', 'normal').setFontSize(10).splitTextToSize(v, R - L - 72), h = 2.6 + vl.length * 4.6;
+    need(h);
+    doc.setTextColor(...MD).text(k, L + 2, y + 4.9);
+    doc.setTextColor(...DK).text(vl, L + 72, y + 4.9);
+    y += h; rule();
   });
 
-  y += 8;
-  const wl = doc.setFont('helvetica', 'italic').setFontSize(9.5).splitTextToSize(d.words, R - L - 10), bh = 16 + wl.length * 4.5;
-  doc.setFillColor(254, 243, 237).setDrawColor(247, 205, 181).roundedRect(L, y, R - L, bh, 2, 2, 'FD');
-  doc.setFont('helvetica', 'normal').setFontSize(11).setTextColor(...DK).text('Amount Received', L + 5, y + 9);
-  doc.setFont('helvetica', 'bold').setFontSize(18).setTextColor(...OR).text('Rs. ' + inr(d.amount), R - 5, y + 9.5, { align: 'right' });
-  doc.setFont('helvetica', 'italic').setFontSize(9.5).setTextColor(...MD).text(wl, L + 5, y + 16);
-  y += bh + 10;
+  // Extra work / charges (itemised)
+  if (d.items.length) {
+    need(28);
+    y += 8;
+    doc.setFont('helvetica', 'bold').setFontSize(8.5).setTextColor(...MD).text('EXTRA WORK / CHARGES', L, y);
+    y += 2.5;
+    doc.setFillColor(247, 249, 252).rect(L, y, R - L, 7.5, 'F');
+    doc.text('#', L + 2, y + 5); doc.text('Item', L + 11, y + 5); doc.text('Amount (Rs.)', R - 2, y + 5, { align: 'right' });
+    y += 7.5;
+    d.items.forEach((it, i) => {
+      const tl = doc.setFont('helvetica', 'normal').setFontSize(10).splitTextToSize(it.title, R - L - 55);
+      const dl = it.detail ? doc.setFontSize(8.5).splitTextToSize(it.detail, R - L - 55) : [];
+      const h = 7.2 + (tl.length - 1) * 4.2 + (dl.length ? 1 + dl.length * 3.7 : 0);
+      need(h);
+      doc.setFontSize(10).setTextColor(...MD).text(String(i + 1), L + 2, y + 4.9);
+      doc.setTextColor(...DK).text(tl, L + 11, y + 4.9);
+      doc.text(inr(it.amount), R - 2, y + 4.9, { align: 'right' });
+      if (dl.length) doc.setFontSize(8.5).setTextColor(...MD).text(dl, L + 11, y + 4.9 + (tl.length - 1) * 4.2 + 4.4);
+      y += h; rule();
+    });
+  }
 
-  // Shrink the seal (down to 50 mm) to keep it on page 1; use a new page only if it still won't fit
+  // Amount box: beside the totals (left) when there are totals, otherwise full width
+  const amtTxt = 'Rs. ' + inr(d.boxAmt);
+  if (d.sum.length) {
+    const X = L + 72, BW = 64;
+    const wl = doc.setFont('helvetica', 'italic').setFontSize(9).splitTextToSize(d.words, BW - 8), bh = 20.5 + wl.length * 3.9;
+    y += 6; need(Math.max(bh, d.sum.length * 7) + 2);
+    const top = y;
+    doc.setFillColor(254, 243, 237).setDrawColor(247, 205, 181).setLineWidth(.3).roundedRect(L, top, BW, bh, 2, 2, 'FD');
+    doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(...DK).text(d.boxLabel, L + 4, top + 7);
+    let fs = 17; doc.setFont('helvetica', 'bold'); while (fs > 11 && doc.setFontSize(fs).getTextWidth(amtTxt) > BW - 8) fs--;
+    doc.setTextColor(...OR).text(amtTxt, L + 4, top + 14.5);
+    doc.setFont('helvetica', 'italic').setFontSize(9).setTextColor(...MD).text(wl, L + 4, top + 21);
+    d.sum.forEach(([k, v, b]) => {
+      doc.setFont('helvetica', b ? 'bold' : 'normal').setFontSize(10);
+      doc.setTextColor(...(b ? DK : MD)).text(k, X + 2, y + 4.9);
+      doc.setTextColor(...DK).text('Rs. ' + inr(v), R - 2, y + 4.9, { align: 'right' });
+      y += 7; rule(X);
+    });
+    y = Math.max(y, top + bh) + 8;
+  } else {
+    y += 8;
+    const wl = doc.setFont('helvetica', 'italic').setFontSize(9.5).splitTextToSize(d.words, R - L - 10), bh = 16 + wl.length * 4.5;
+    need(bh);
+    doc.setFillColor(254, 243, 237).setDrawColor(247, 205, 181).setLineWidth(.3).roundedRect(L, y, R - L, bh, 2, 2, 'FD');
+    doc.setFont('helvetica', 'normal').setFontSize(11).setTextColor(...DK).text(d.boxLabel, L + 5, y + 9);
+    doc.setFont('helvetica', 'bold').setFontSize(18).setTextColor(...OR).text(amtTxt, R - 5, y + 9.5, { align: 'right' });
+    doc.setFont('helvetica', 'italic').setFontSize(9.5).setTextColor(...MD).text(wl, L + 5, y + 16);
+    y += bh + 10;
+  }
+
+  // Shrink the seal (down to 46 mm) to keep it on the page; use a new page only if it still won't fit
   const ratio = A.SEAL.h / A.SEAL.w;
-  let sw = Math.min(70, (268 - y) / ratio);
-  if (sw < 50) { doc.addPage(); y = 20; sw = 70; }
+  let sw = Math.min(70, (271 - y) / ratio);
+  if (sw < 46) { doc.addPage(); y = 20; sw = 70; }
   const sx = 118, sh = sw * ratio;
   doc.setFont('helvetica', 'bold').setFontSize(10).setTextColor(...DK).text('For, ELLIPSE SOLAR', sx, y);
   doc.addImage(A.SEAL.src, 'PNG', sx, y + 2, sw, sh);
   doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(85).text(CO.signer, sx, y + sh + 6);
-  doc.setFontSize(8).setTextColor(139, 148, 168).text('This is a computer generated receipt.', L, y + sh + 6);
+  doc.setFontSize(8).setTextColor(139, 148, 168).text(`This is a computer generated ${d.isReceipt ? 'receipt' : 'document'}.`, L, y + sh + 6);
 
-  doc.setDrawColor(228, 231, 236).line(L, 280, R, 280);
-  doc.setFontSize(8.5).setTextColor(...MD).text('Thank you for choosing Ellipse Solar - Powering a Greener Tomorrow', W / 2, 285, { align: 'center' });
+  // Footer on every page
+  const n = doc.getNumberOfPages();
+  for (let i = 1; i <= n; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...LN).setLineWidth(.3).line(L, 280, R, 280);
+    doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...MD).text('Thank you for choosing Ellipse Solar - Powering a Greener Tomorrow', W / 2, 285, { align: 'center' });
+    if (n > 1) doc.setFontSize(8).text(`Page ${i} of ${n}`, R, 285, { align: 'right' });
+  }
   return doc;
 }
 
@@ -333,11 +577,19 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add
 function ready() {
   const d = data();
   if (!d.name) { $('name').focus(); toast('Enter the customer name'); return null; }
-  if (!d.amount) { $('amount').focus(); toast('Enter the amount'); return null; }
-  if (!d.brand) { $('brand').focus(); toast('Select the panel brand'); return null; }
+  const bad = d.all.find(i => i.bad);
+  if (bad) { bad.bad.focus(); toast(bad.kind === 'pipe' ? 'Pipe: enter the length and the rate' : `${KINDS[bad.kind].tag}: enter the amount`); return null; }
+  if (d.solar) {
+    if (!d.amount) { $('amount').focus(); toast('Enter the amount'); return null; }
+    if (!d.brand) { $('brand').focus(); toast('Select the panel brand'); return null; }
+  } else {
+    if (!d.items.length) { toast('Add at least one extra item with its amount'); return null; }
+    if (!d.amount && !d.balance) { $('paid').focus(); toast('Nothing is due: previously paid covers all charges'); return null; }
+  }
   if (!d.sp) { $('sp').focus(); toast('Enter the sales person name'); return null; }
   if (!d.date) { $('date').valueAsDate = new Date(); d.date = fmtDate($('date').value); }
-  d.file = d.name.replace(/[\\/:*?"<>|]/g, '').trim() + ' Receipt.pdf';
+  const base = d.name.replace(/[\\/:*?"<>|]/g, '').trim();
+  d.file = base + (!d.isReceipt ? ' Payment Due.pdf' : d.solar ? ' Receipt.pdf' : ' Extra Charges Receipt.pdf');
   return d;
 }
 
@@ -347,9 +599,20 @@ function waNumber(raw) {
 }
 
 function waMessage(d) {
-  return `Namaste *${d.name}* ji,\n\nThank you for your payment to *Ellipse Solar*. Here is your receipt:\n\n` +
-    `Receipt No: ${d.rno}\nDate: ${d.date}\nAmount: *Rs. ${inr(d.amount)}*\nMode: ${$('mode').value}\nTowards: ${$('towards').value}\nPanel Brand: ${d.brand}\nSales Person: ${d.sp}\n\n` +
-    `The PDF receipt (${d.file}) is attached.\n\n_Ellipse Solar - Powering a Greener Tomorrow_`;
+  const m = [`Namaste *${d.name}* ji,`, ''];
+  m.push(d.isReceipt ? 'Thank you for your payment to *Ellipse Solar*. Here is your receipt:'
+                     : 'Here are the extra work charges for your solar site from *Ellipse Solar*:', '');
+  m.push(`${d.isReceipt ? 'Receipt' : 'Ref'} No: ${d.rno}`, `Date: ${d.date}`);
+  if (d.isReceipt) m.push(`Amount Received: *Rs. ${inr(d.amount)}*`);
+  d.info.forEach(([k, v]) => m.push(`${k}: ${v}`));
+  if (d.items.length) {
+    m.push('', '*Extra work / charges:*');
+    d.items.forEach((it, i) => m.push(`${i + 1}. ${it.title}${it.detail ? ` (${it.detail})` : ''}: Rs. ${inr(it.amount)}`));
+  }
+  const s = d.sum.filter(([k]) => k !== 'Received Now');
+  if (s.length) { m.push(''); s.forEach(([k, v, b]) => m.push(`${k}: ${b ? '*' : ''}Rs. ${inr(v)}${b ? '*' : ''}`)); }
+  m.push('', `The PDF (${d.file}) is attached.`, '', '_Ellipse Solar - Powering a Greener Tomorrow_');
+  return m.join('\n');
 }
 
 $('dl').onclick = () => {
@@ -382,12 +645,18 @@ $('share').onclick = async () => {
 };
 
 // ---------- init ----------
+const params = new URLSearchParams(location.search);
 $('date').valueAsDate = new Date();
 $('rno').value = nextRno();
+// Receipt type from the link (?type=extra)
+if (params.get('type') === 'extra') document.querySelector('input[name=type][value=extra]').checked = true;
 // Sales person: from the link (?salesperson=Name), else the last name used on this device
-$('sp').value = new URLSearchParams(location.search).get('salesperson') || store.get('es_sp') || '';
+$('sp').value = params.get('salesperson') || store.get('es_sp') || '';
 $('sp').addEventListener('change', () => store.set('es_sp', $('sp').value.trim()));
+document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => addItem(b.dataset.add));
+$('items').addEventListener('click', e => { const x = e.target.closest('.x'); if (x) { x.closest('.item').remove(); render(); } });
 $('f').addEventListener('input', render);
+$('f').addEventListener('change', render);
 render();
 </script>
 </body>
