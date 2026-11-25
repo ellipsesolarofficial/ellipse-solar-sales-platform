@@ -359,7 +359,9 @@ function data() {
     name: clean($('name').value), address: $('address').value.trim(),
     phone: $('phone').value.replace(/\D/g, ''), rno: $('rno').value.trim(), date: fmtDate($('date').value),
     sp: clean($('sp').value), brand: $('brand').value,
-    isReceipt: amount > 0, info: [], sum: []
+    // Solar payments always print as a receipt (amount is required there);
+    // extra work with nothing received yet prints as "Payment Due"
+    isReceipt: solar || amount > 0, info: [], sum: []
   };
 
   if (d.isReceipt) {
